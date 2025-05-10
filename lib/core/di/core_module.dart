@@ -7,6 +7,9 @@ import 'package:expense_tracker/core/network/network_info.dart';
 import 'package:expense_tracker/core/network/network_info_impl.dart';
 import 'package:expense_tracker/core/services/hive/hive_registry.dart';
 import 'package:expense_tracker/features/auth/data/models/hive_user_model.dart';
+import 'package:expense_tracker/core/services/theme/theme_service.dart';
+import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @module
 abstract class CoreModule {
@@ -46,4 +49,23 @@ abstract class CoreModule {
     }
     return HiveRegistry.tokenBox;
   }
+
+  @preResolve
+  @Named('preferences')
+  Future<Box<bool>> preferencesBox() async {
+    if (!Hive.isBoxOpen('preferences')) {
+      await HiveRegistry.initialize();
+    }
+    return HiveRegistry.preferencesBox;
+  }
+
+  @preResolve
+  Future<SharedPreferences> get sharedPreferences async =>
+      await SharedPreferences.getInstance();
+
+  @singleton
+  ThemeService themeService(SharedPreferences prefs) => ThemeService(prefs);
+
+  @singleton
+  ThemeBloc themeBloc(ThemeService themeService) => ThemeBloc(themeService);
 }

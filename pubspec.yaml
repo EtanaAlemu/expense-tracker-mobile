@@ -69,6 +69,23 @@ dependencies:
   # Added from the code block
   internet_connection_checker: ^1.0.0+1
 
+  # UI Components
+  fl_chart: ^0.66.2
+  intl: ^0.19.0
+  app_links: ^3.4.1
+  flutter_localizations:
+    sdk: flutter
+
+  shared_preferences: ^2.2.2
+
+  # Added from the code block
+  url_launcher: ^6.2.2
+  android_intent_plus: ^4.0.3
+
+  image_picker: ^1.0.4
+
+  flutter_image_compress: ^2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

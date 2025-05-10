@@ -21,7 +21,7 @@ class UserModel {
       firstName: json['firstName'],
       lastName: json['lastName'],
       email: json['email'],
-      currency: json['currency'] ?? 'USD',
+      currency: json['currency'] ?? 'BIRR',
     );
   }
 
@@ -41,7 +41,6 @@ class UserModel {
       firstName: firstName,
       lastName: lastName,
       email: email,
-      password: '', // Password is not returned from API
       currency: currency,
     );
   }

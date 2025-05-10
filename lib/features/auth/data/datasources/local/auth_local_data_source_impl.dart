@@ -1,33 +1,34 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:expense_tracker/features/auth/data/datasources/local/auth_local_data_source.dart';
 import 'package:expense_tracker/features/auth/data/models/hive_user_model.dart';
-import 'package:expense_tracker/features/auth/domain/entities/user.dart';
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final Box<HiveUserModel> _userBox;
   final Box<String> _tokenBox;
+  final Box<bool> _preferencesBox;
 
   AuthLocalDataSourceImpl({
     required Box<HiveUserModel> userBox,
     required Box<String> tokenBox,
+    required Box<bool> preferencesBox,
   })  : _userBox = userBox,
-        _tokenBox = tokenBox;
+        _tokenBox = tokenBox,
+        _preferencesBox = preferencesBox;
 
   @override
-  Future<User?> getCachedUser() async {
+  Future<HiveUserModel?> getCachedUser() async {
     try {
       final userModel = _userBox.get('current_user');
-      return userModel?.toEntity();
+      return userModel;
     } catch (e) {
       return null;
     }
   }
 
   @override
-  Future<void> cacheUser(User user) async {
+  Future<void> cacheUser(HiveUserModel user) async {
     try {
-      final userModel = HiveUserModel.fromEntity(user);
-      await _userBox.put('current_user', userModel);
+      await _userBox.put('current_user', user);
     } catch (e) {
       throw Exception('Error caching user: $e');
     }
@@ -66,6 +67,24 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       await _tokenBox.delete('access_token');
     } catch (e) {
       throw Exception('Error clearing cached token: $e');
+    }
+  }
+
+  @override
+  Future<bool> getRememberMe() async {
+    try {
+      return _preferencesBox.get('remember_me') ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> cacheRememberMe(bool value) async {
+    try {
+      await _preferencesBox.put('remember_me', value);
+    } catch (e) {
+      throw Exception('Error caching remember me preference: $e');
     }
   }
 }

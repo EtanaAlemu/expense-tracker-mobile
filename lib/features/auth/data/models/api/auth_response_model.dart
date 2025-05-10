@@ -50,8 +50,7 @@ class UserResponseModel extends Equatable {
       firstName: firstName,
       lastName: lastName,
       email: email,
-      password: '', // Password is not returned from API
-      currency: 'USD', // Default currency
+      currency: 'Birr',
     );
   }
 

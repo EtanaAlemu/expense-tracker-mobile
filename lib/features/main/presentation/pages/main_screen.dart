@@ -1,9 +1,10 @@
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/main/presentation/pages/home_page.dart';
 import 'package:expense_tracker/features/main/presentation/pages/transactions_page.dart';
-import 'package:expense_tracker/features/main/presentation/pages/budgets_page.dart';
+import 'package:expense_tracker/features/category/presentation/pages/categories_page.dart';
 import 'package:expense_tracker/features/main/presentation/pages/profile_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,42 +20,53 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomePage(),
     const TransactionsPage(),
-    const BudgetsPage(),
+    const CategoriesPage(),
     const ProfilePage(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        state.maybeWhen(
-          unauthenticated: () {
-            Navigator.of(context).pushReplacementNamed('/signin');
-          },
-          orElse: () {},
-        );
+        if (!state.isAuthenticated) {
+          Navigator.of(context).pushReplacementNamed('/auth');
+        }
       },
       child: Scaffold(
         body: _pages[_currentIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+        bottomNavigationBar: NavigationBar(
+          height: 65,
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          elevation: 8,
+          backgroundColor: theme.colorScheme.surface,
+          indicatorColor: theme.colorScheme.primaryContainer,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard),
               label: 'Home',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
               label: 'Transactions',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance),
-              label: 'Budgets',
+            NavigationDestination(
+              icon: Icon(Icons.category_outlined),
+              selectedIcon: Icon(Icons.category),
+              label: 'Categories',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
               label: 'Profile',
             ),
           ],

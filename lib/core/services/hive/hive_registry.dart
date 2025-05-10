@@ -8,6 +8,7 @@ import 'package:expense_tracker/features/transaction/data/models/hive_transactio
 class HiveRegistry {
   static Box<HiveUserModel>? _userBox;
   static Box<String>? _tokenBox;
+  static Box<bool>? _preferencesBox;
   static Box<HiveBudgetModel>? _budgetBox;
   static Box<HiveCategoryModel>? _categoryBox;
   static Box<HiveExpenseModel>? _expenseBox;
@@ -26,13 +27,18 @@ class HiveRegistry {
     }
   }
 
-  static Future<void> initialize() async {
-    await Hive.initFlutter();
+  static Future<void> initialize([String? path]) async {
+    if (path != null) {
+      await Hive.initFlutter(path);
+    } else {
+      await Hive.initFlutter();
+    }
     await registerAdapters();
 
     // Open boxes with proper types
     _userBox = await Hive.openBox<HiveUserModel>('users');
     _tokenBox = await Hive.openBox<String>('tokens');
+    _preferencesBox = await Hive.openBox<bool>('preferences');
     _budgetBox = await Hive.openBox<HiveBudgetModel>('budgets');
     _categoryBox = await Hive.openBox<HiveCategoryModel>('categories');
     _expenseBox = await Hive.openBox<HiveExpenseModel>('expenses');
@@ -41,6 +47,8 @@ class HiveRegistry {
 
   static Box<HiveUserModel> get userBox => _getBox(_userBox, 'users');
   static Box<String> get tokenBox => _getBox(_tokenBox, 'tokens');
+  static Box<bool> get preferencesBox =>
+      _getBox(_preferencesBox, 'preferences');
   static Box<HiveBudgetModel> get budgetBox => _getBox(_budgetBox, 'budgets');
   static Box<HiveCategoryModel> get categoryBox =>
       _getBox(_categoryBox, 'categories');

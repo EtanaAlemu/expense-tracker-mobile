@@ -1,31 +1,35 @@
 import 'package:dartz/dartz.dart';
 import 'package:expense_tracker/core/error/failures.dart';
-import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
+import 'package:expense_tracker/core/usecase/usecase.dart';
 import 'package:expense_tracker/features/auth/domain/entities/user.dart';
 import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 class SignUpParams {
-  final User user;
+  final String email;
   final String password;
+  final String firstName;
+  final String lastName;
 
   const SignUpParams({
-    required this.user,
+    required this.email,
     required this.password,
+    required this.firstName,
+    required this.lastName,
   });
 }
 
-class SignUpUseCase implements BaseUseCase<void, SignUpParams> {
-  final AuthRepository _authRepository;
+class SignUpUseCase extends UseCase<User, SignUpParams> {
+  final AuthRepository repository;
 
-  SignUpUseCase(this._authRepository);
+  SignUpUseCase(this.repository);
 
   @override
-  Future<Either<Failure, void>> call(SignUpParams params) async {
-    try {
-      await _authRepository.signUp(params.user.email, params.password, params.user.firstName, params.user.lastName);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure('Failed to sign up'));
-    }
+  Future<Either<Failure, User>> call(SignUpParams params) async {
+    return await repository.signUp(
+      params.email,
+      params.password,
+      params.firstName,
+      params.lastName,
+    );
   }
 }

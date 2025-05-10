@@ -10,5 +10,6 @@ abstract class AuthRemoteDataSource {
   Future<void> resetPassword(String token, String newPassword);
   Future<void> updateUser(User user);
   Future<void> changePassword(String oldPassword, String newPassword);
-  Future<ForgotPasswordResponseModel> forgotPassword(String email);
+  Future<String> forgotPassword(String email);
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData);
 }

@@ -86,29 +86,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<ForgotPasswordResponseModel> forgotPassword(String email) async {
+  Future<String> forgotPassword(String email) async {
     try {
       final response = await _apiService.dio.post(
-        ApiConstants.forgotPassword,
-        data: ForgotPasswordRequestModel(email: email).toJson(),
+        '/auth/forgot-password',
+        data: {'email': email},
       );
 
       if (response.statusCode == 200) {
-        return ForgotPasswordResponseModel.fromJson(response.data);
-      } else if (response.statusCode == 400) {
-        throw AuthException(response.data['message'] ?? 'User not found');
+        return response.data['message'] as String;
       } else {
         throw AuthException(
-            'Failed to process forgot password request: ${response.statusMessage}');
+            response.data['message'] ?? 'Failed to send reset link');
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400) {
-        throw AuthException(e.response?.data['message'] ?? 'User not found');
-      }
-      throw AuthException(
-          'Failed to process forgot password request: ${e.message}');
     } catch (e) {
-      throw AuthException('Failed to process forgot password request: $e');
+      throw AuthException('Failed to send reset link. Please try again.');
     }
   }
 
@@ -141,5 +133,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> updateUser(User user) async {
     // Implementation needed
     throw UnimplementedError();
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData) async {
+    try {
+      final response = await _apiService.dio.put(
+        ApiConstants.updateProfile,
+        data: userData,
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw AuthException(
+            'Failed to update profile: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw AuthException('Failed to update profile: ${e.message}');
+    } catch (e) {
+      throw AuthException('Failed to update profile: $e');
+    }
   }
 }

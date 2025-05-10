@@ -21,8 +21,8 @@ class HiveUserModelAdapter extends TypeAdapter<HiveUserModel> {
       firstName: fields[1] as String,
       lastName: fields[2] as String,
       email: fields[3] as String,
-      password: fields[4] as String,
-      currency: fields[5] as String,
+      image: fields[4] as String?,
+      currency: fields[5] as String?,
     );
   }
 
@@ -39,7 +39,7 @@ class HiveUserModelAdapter extends TypeAdapter<HiveUserModel> {
       ..writeByte(3)
       ..write(obj.email)
       ..writeByte(4)
-      ..write(obj.password)
+      ..write(obj.image)
       ..writeByte(5)
       ..write(obj.currency);
   }

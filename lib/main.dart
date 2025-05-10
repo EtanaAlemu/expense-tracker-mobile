@@ -1,88 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:expense_tracker/features/auth/presentation/routes/auth_routes.dart';
-import 'package:expense_tracker/injection/injection.dart';
-import 'package:expense_tracker/core/services/hive/hive_registry.dart';
-import 'package:expense_tracker/core/widgets/error_widget.dart';
-import 'package:flutter/foundation.dart';
+import 'package:expense_tracker/core/theme/app_theme.dart';
+import 'package:expense_tracker/features/main/presentation/pages/main_screen.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_bloc.dart';
+import 'package:expense_tracker/features/transaction/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
+import 'package:expense_tracker/features/auth/presentation/pages/auth_screen.dart';
+import 'package:expense_tracker/injection/injection.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get_it/get_it.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:expense_tracker/core/services/hive/hive_registry.dart';
+import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    debugPrint('Initializing Hive...');
-    await HiveRegistry.initialize();
-    debugPrint('Hive initialized successfully');
 
-    debugPrint('Configuring dependencies...');
-    await configureDependencies();
-    debugPrint('Dependencies configured successfully');
+  // Initialize Hive using HiveRegistry
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  await HiveRegistry.initialize(appDocumentDir.path);
 
-    debugPrint('Starting app...');
-    runApp(const MyApp());
-  } catch (e, stackTrace) {
-    debugPrint('Error during initialization: $e');
-    debugPrint('Stack trace: $stackTrace');
+  // Initialize dependencies
+  await configureDependencies();
 
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: AppErrorWidget(
-            title: 'Failed to initialize app',
-            message: 'Please try restarting the app',
-            onRetry: () {
-              // Restart the app
-              main();
-            },
-          ),
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) =>
+              getIt<AuthBloc>()..add(const CheckAuthStatusEvent()),
         ),
-      ),
-    );
-  }
+        BlocProvider(create: (context) => GetIt.I<CategoryBloc>()),
+        BlocProvider(create: (context) => GetIt.I<TransactionBloc>()),
+        BlocProvider<ThemeBloc>(
+          create: (context) =>
+              GetIt.instance<ThemeBloc>()..add(ThemeInitialized()),
+        ),
+      ],
+      child: const AppRoot(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AppRoot extends StatelessWidget {
+  const AppRoot({super.key});
 
   @override
   Widget build(BuildContext context) {
-    try {
-      final authBloc = getIt<AuthBloc>();
-      final categoryBloc = getIt<CategoryBloc>();
-      debugPrint('AuthBloc successfully retrieved from GetIt');
+    final themeState = context.watch<ThemeBloc>().state;
+    final authState = context.watch<AuthBloc>().state;
 
-      return MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (context) => authBloc..add(CheckAuthStatus())),
-          BlocProvider(create: (context) => categoryBloc),
-        ],
-        child: MaterialApp(
-          title: 'Expense Tracker',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            useMaterial3: true,
-          ),
-          initialRoute: AuthRoutes.signIn,
-          routes: AuthRoutes.getRoutes(),
-        ),
-      );
-    } catch (e, stackTrace) {
-      debugPrint('Error creating AuthBloc: $e');
-      debugPrint('Stack trace: $stackTrace');
-
-      return MaterialApp(
-        home: Scaffold(
-          body: AppErrorWidget(
-            title: 'Failed to start app',
-            message: 'Please try restarting the app',
-            onRetry: () {
-              // Restart the app
-              main();
-            },
-          ),
-        ),
-      );
-    }
+    return MaterialApp(
+      title: 'Expense Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode:
+          themeState is ThemeLoaded ? themeState.themeMode : ThemeMode.system,
+      home: authState.isAuthenticated ? const MainScreen() : const AuthScreen(),
+      routes: {
+        '/auth': (context) => const AuthScreen(),
+        '/home': (context) => const MainScreen(),
+      },
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+      ],
+    );
   }
 }

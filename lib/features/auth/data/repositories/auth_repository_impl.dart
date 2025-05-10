@@ -10,6 +10,8 @@ import 'package:expense_tracker/features/auth/domain/entities/user.dart';
 import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 import 'package:expense_tracker/core/error/exceptions.dart';
 import 'dart:convert';
+import 'package:expense_tracker/features/auth/data/mappers/user_mapper.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/update_user_usecase.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -34,14 +36,15 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         return Left(CacheFailure('No user found'));
       }
-      return Right(user);
+      return Right(UserMapper.toEntity(user));
     } catch (e) {
       return Left(CacheFailure('Failed to get current user: $e'));
     }
   }
 
   @override
-  Future<Either<Failure, User>> signIn(String email, String password) async {
+  Future<Either<Failure, User>> signIn(String email, String password,
+      {bool rememberMe = false}) async {
     try {
       if (await _networkInfo.isConnected) {
         try {
@@ -49,39 +52,41 @@ class AuthRepositoryImpl implements AuthRepository {
             SignInRequestModel(email: email, password: password),
           );
 
-          await _localDataSource.cacheUser(response.user.toEntity());
+          final user = response.user.toEntity();
+          await _localDataSource.cacheUser(UserMapper.toHiveModel(user));
           await _localDataSource.cacheToken(response.token);
+          await _localDataSource.cacheRememberMe(rememberMe);
           _apiService.setToken(response.token);
-          return Right(response.user.toEntity());
+          return Right(user);
+        } on AuthException catch (e) {
+          // Clear any cached data on authentication failure
+          await _localDataSource.clearCachedUser();
+          await _localDataSource.clearCachedToken();
+          _apiService.clearToken();
+          return Left(ServerFailure(e.message));
         } catch (e) {
-          return await _tryOfflineSignIn(email, password);
+          return Left(ServerFailure('Failed to sign in: $e'));
         }
       } else {
-        return await _tryOfflineSignIn(email, password);
+        // Only allow offline sign-in if we have valid cached credentials
+        final cachedUser = await _localDataSource.getCachedUser();
+        final cachedToken = await _localDataSource.getCachedToken();
+
+        if (cachedUser == null || cachedToken == null) {
+          return Left(NetworkFailure(
+              'No internet connection and no cached credentials'));
+        }
+
+        final user = UserMapper.toEntity(cachedUser);
+        if (user.email != email) {
+          return Left(CacheFailure('Email does not match cached user'));
+        }
+
+        _apiService.setToken(cachedToken);
+        return Right(user);
       }
     } catch (e) {
       return Left(ServerFailure('Failed to sign in: $e'));
-    }
-  }
-
-  Future<Either<Failure, User>> _tryOfflineSignIn(
-      String email, String password) async {
-    try {
-      final cachedUser = await _localDataSource.getCachedUser();
-      if (cachedUser == null) {
-        return Left(CacheFailure('No cached user found'));
-      }
-      if (cachedUser.email != email) {
-        return Left(CacheFailure('Email does not match cached user'));
-      }
-      final token = await _localDataSource.getCachedToken();
-      if (token == null) {
-        return Left(CacheFailure('No cached token found'));
-      }
-      _apiService.setToken(token);
-      return Right(cachedUser);
-    } catch (e) {
-      return Left(CacheFailure('Failed to sign in offline: $e'));
     }
   }
 
@@ -90,19 +95,35 @@ class AuthRepositoryImpl implements AuthRepository {
       String email, String password, String firstName, String lastName) async {
     try {
       if (await _networkInfo.isConnected) {
-        final response = await _remoteDataSource.signUp(
-          SignUpRequestModel(
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            password: password,
-          ),
-        );
+        try {
+          final response = await _remoteDataSource.signUp(
+            SignUpRequestModel(
+              firstName: firstName,
+              lastName: lastName,
+              email: email,
+              password: password,
+            ),
+          );
 
-        await _localDataSource.cacheUser(response.user.toEntity());
-        await _localDataSource.cacheToken(response.token);
-        _apiService.setToken(response.token);
-        return Right(response.user.toEntity());
+          final user = response.user.toEntity();
+          await _localDataSource.cacheUser(UserMapper.toHiveModel(user));
+          await _localDataSource.cacheToken(response.token);
+          _apiService.setToken(response.token);
+          return Right(user);
+        } on AuthException catch (e) {
+          // Clear any cached data on registration failure
+          await _localDataSource.clearCachedUser();
+          await _localDataSource.clearCachedToken();
+          _apiService.clearToken();
+          return Left(ServerFailure(e.message));
+        } catch (e) {
+          if (e.toString().contains('User validation failed')) {
+            final errorMessage =
+                e.toString().split('User validation failed: ')[1];
+            return Left(ServerFailure(errorMessage));
+          }
+          return Left(ServerFailure('Failed to sign up: $e'));
+        }
       } else {
         return Left(NetworkFailure('No internet connection'));
       }
@@ -124,12 +145,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> updateUser(User user) async {
+  Future<Either<Failure, User>> updateUser(UpdateUserParams params) async {
     try {
-      await _localDataSource.cacheUser(user);
-      return Right(user);
+      final userJson = await UserMapper.toUpdateProfileJson(params);
+      final response = await _remoteDataSource.updateProfile(userJson);
+      final updatedUser = UserMapper.fromJson(response['user']);
+      await _localDataSource.cacheUser(UserMapper.toHiveModel(updatedUser));
+      return Right(updatedUser);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to update user: $e'));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -175,17 +203,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> forgotPassword(String email) async {
+  Future<Either<Failure, String>> forgotPassword(String email) async {
     try {
-      if (!await _networkInfo.isConnected) {
-        return Left(NetworkFailure('No internet connection'));
-      }
-      await _remoteDataSource.forgotPassword(email);
-      return const Right(null);
-    } on ServerException catch (e) {
+      final result = await _remoteDataSource.forgotPassword(email);
+      return Right(result);
+    } on AuthException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnknownFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -216,6 +241,26 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(isValid);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> getRememberMe() async {
+    try {
+      final rememberMe = await _localDataSource.getRememberMe();
+      return Right(rememberMe);
+    } catch (e) {
+      return Left(CacheFailure('Failed to get remember me preference: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> clearRememberMe() async {
+    try {
+      await _localDataSource.cacheRememberMe(false);
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear remember me preference: $e'));
     }
   }
 

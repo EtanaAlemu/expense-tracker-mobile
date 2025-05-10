@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:expense_tracker/core/error/failures.dart';
-import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
+import 'package:expense_tracker/core/usecase/usecase.dart';
 import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 class ChangePasswordParams {
@@ -13,19 +13,14 @@ class ChangePasswordParams {
   });
 }
 
-class ChangePasswordUseCase implements BaseUseCase<void, ChangePasswordParams> {
-  final AuthRepository _authRepository;
+class ChangePasswordUseCase extends UseCase<void, ChangePasswordParams> {
+  final AuthRepository repository;
 
-  ChangePasswordUseCase(this._authRepository);
+  ChangePasswordUseCase(this.repository);
 
   @override
   Future<Either<Failure, void>> call(ChangePasswordParams params) async {
-    try {
-      await _authRepository.changePassword(
-          params.currentPassword, params.newPassword);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure('Failed to change password'));
-    }
+    return await repository.changePassword(
+        params.currentPassword, params.newPassword);
   }
 }

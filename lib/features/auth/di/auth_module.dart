@@ -20,6 +20,12 @@ import 'package:expense_tracker/features/auth/domain/usecases/forgot_password_us
 import 'package:expense_tracker/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/is_signed_in_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/get_token_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/sign_in_as_guest_usecase.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/check_remember_me_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/check_auth_status_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/validate_token_on_start_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/clear_remember_me_usecase.dart';
 
 @module
 abstract class AuthModule {
@@ -27,10 +33,12 @@ abstract class AuthModule {
   AuthLocalDataSource authLocalDataSource(
     @Named('users') Box<HiveUserModel> userBox,
     @Named('tokens') Box<String> tokenBox,
+    @Named('preferences') Box<bool> preferencesBox,
   ) =>
       AuthLocalDataSourceImpl(
         userBox: userBox,
         tokenBox: tokenBox,
+        preferencesBox: preferencesBox,
       );
 
   @singleton
@@ -51,47 +59,110 @@ abstract class AuthModule {
         apiService: apiService,
       );
 
-  @singleton
+  @lazySingleton
   SignInUseCase signInUseCase(AuthRepository repository) =>
       SignInUseCase(repository);
 
-  @singleton
+  @lazySingleton
   SignUpUseCase signUpUseCase(AuthRepository repository) =>
       SignUpUseCase(repository);
 
-  @singleton
-  SignOutUseCase signOutUseCase(AuthRepository repository) =>
-      SignOutUseCase(repository);
-
-  @singleton
-  ChangePasswordUseCase changePasswordUseCase(AuthRepository repository) =>
-      ChangePasswordUseCase(repository);
-
-  @singleton
-  UpdateUserUseCase updateUserUseCase(AuthRepository repository) =>
-      UpdateUserUseCase(repository);
-
-  @singleton
-  ResetPasswordUseCase resetPasswordUseCase(AuthRepository repository) =>
-      ResetPasswordUseCase(repository);
-
-  @singleton
+  @lazySingleton
   ForgotPasswordUseCase forgotPasswordUseCase(AuthRepository repository) =>
       ForgotPasswordUseCase(repository);
 
-  @singleton
-  GetCurrentUserUseCase getCurrentUserUseCase(AuthRepository repository) =>
-      GetCurrentUserUseCase(repository);
+  @lazySingleton
+  ResetPasswordUseCase resetPasswordUseCase(AuthRepository repository) =>
+      ResetPasswordUseCase(repository);
 
-  @singleton
-  IsSignedInUseCase isSignedInUseCase(AuthRepository repository) =>
-      IsSignedInUseCase(repository);
+  @lazySingleton
+  SignOutUseCase signOutUseCase(AuthRepository repository) =>
+      SignOutUseCase(repository);
 
-  @singleton
+  @lazySingleton
+  SignInAsGuestUseCase signInAsGuestUseCase(AuthRepository repository) =>
+      SignInAsGuestUseCase(repository);
+
+  @lazySingleton
   GetTokenUseCase getTokenUseCase(AuthRepository repository) =>
       GetTokenUseCase(repository);
 
-  @singleton
+  @lazySingleton
+  GetCurrentUserUseCase getCurrentUserUseCase(AuthRepository repository) =>
+      GetCurrentUserUseCase(repository);
+
+  @lazySingleton
+  UpdateUserUseCase updateUserUseCase(AuthRepository repository) =>
+      UpdateUserUseCase(repository);
+
+  @lazySingleton
+  ChangePasswordUseCase changePasswordUseCase(AuthRepository repository) =>
+      ChangePasswordUseCase(repository);
+
+  @lazySingleton
+  IsSignedInUseCase isSignedInUseCase(AuthRepository repository) =>
+      IsSignedInUseCase(repository);
+
+  @lazySingleton
   ValidateTokenUseCase validateTokenUseCase(AuthRepository repository) =>
       ValidateTokenUseCase(repository);
+
+  @lazySingleton
+  CheckRememberMeUseCase checkRememberMeUseCase(AuthRepository repository) =>
+      CheckRememberMeUseCase(repository);
+
+  @lazySingleton
+  ValidateTokenOnStartUseCase validateTokenOnStartUseCase(
+          AuthRepository repository) =>
+      ValidateTokenOnStartUseCase(repository);
+
+  @lazySingleton
+  CheckAuthStatusUseCase checkAuthStatusUseCase(
+    AuthRepository repository,
+    CheckRememberMeUseCase checkRememberMeUseCase,
+    ValidateTokenOnStartUseCase validateTokenOnStartUseCase,
+  ) =>
+      CheckAuthStatusUseCase(
+        repository,
+        checkRememberMeUseCase,
+        validateTokenOnStartUseCase,
+      );
+
+  @lazySingleton
+  ClearRememberMeUseCase clearRememberMeUseCase(AuthRepository repository) =>
+      ClearRememberMeUseCase(repository);
+
+  @injectable
+  AuthBloc authBloc(
+    SignInUseCase signInUseCase,
+    SignUpUseCase signUpUseCase,
+    ForgotPasswordUseCase forgotPasswordUseCase,
+    ResetPasswordUseCase resetPasswordUseCase,
+    SignOutUseCase signOutUseCase,
+    SignInAsGuestUseCase signInAsGuestUseCase,
+    GetTokenUseCase getTokenUseCase,
+    GetCurrentUserUseCase getCurrentUserUseCase,
+    UpdateUserUseCase updateUserUseCase,
+    ChangePasswordUseCase changePasswordUseCase,
+    IsSignedInUseCase isSignedInUseCase,
+    ValidateTokenUseCase validateTokenUseCase,
+    CheckAuthStatusUseCase checkAuthStatusUseCase,
+    ClearRememberMeUseCase clearRememberMeUseCase,
+  ) =>
+      AuthBloc(
+        signInUseCase: signInUseCase,
+        signUpUseCase: signUpUseCase,
+        forgotPasswordUseCase: forgotPasswordUseCase,
+        resetPasswordUseCase: resetPasswordUseCase,
+        signOutUseCase: signOutUseCase,
+        signInAsGuestUseCase: signInAsGuestUseCase,
+        getTokenUseCase: getTokenUseCase,
+        getCurrentUserUseCase: getCurrentUserUseCase,
+        updateUserUseCase: updateUserUseCase,
+        changePasswordUseCase: changePasswordUseCase,
+        isSignedInUseCase: isSignedInUseCase,
+        validateTokenUseCase: validateTokenUseCase,
+        checkAuthStatusUseCase: checkAuthStatusUseCase,
+        clearRememberMeUseCase: clearRememberMeUseCase,
+      );
 }

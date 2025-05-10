@@ -16,6 +16,7 @@ import 'package:expense_tracker/features/category/domain/usecases/delete_categor
 import 'package:expense_tracker/features/category/domain/usecases/get_categories_by_type.dart'
     as get_categories_by_type;
 import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
+import 'package:expense_tracker/features/category/domain/repositories/category_repository.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final get_categories.GetCategories getCategories;
@@ -24,6 +25,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final update_category.UpdateCategory updateCategory;
   final delete_category.DeleteCategory deleteCategory;
   final get_categories_by_type.GetCategoriesByType getCategoriesByType;
+  final CategoryRepository repository;
 
   CategoryBloc({
     required this.getCategories,
@@ -32,6 +34,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     required this.updateCategory,
     required this.deleteCategory,
     required this.getCategoriesByType,
+    required this.repository,
   }) : super(CategoryInitial()) {
     on<GetCategories>(_onGetCategories);
     on<GetCategory>(_onGetCategory);
@@ -45,14 +48,84 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     GetCategories event,
     Emitter<CategoryState> emit,
   ) async {
-    emit(CategoryLoading());
     try {
+      print('🔄 Getting categories...');
       final result = await getCategories(NoParams());
       await result.fold(
-        (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
-        (categories) async => emit(CategoryLoaded(categories)),
+        (failure) async {
+          print('❌ Error getting categories: ${failure.message}');
+          emit(CategoryError(_mapFailureToMessage(failure)));
+        },
+        (categories) async {
+          print('📦 Got ${categories.length} categories from local storage');
+          emit(CategoryLoaded(categories));
+
+          // If we have internet, fetch remote data and update
+          print('🌐 Fetching remote categories...');
+          final remoteResult = await repository.getRemoteCategories();
+          await remoteResult.fold(
+            (failure) async {
+              print('❌ Error getting remote categories: ${failure.message}');
+              return null;
+            },
+            (remoteCategories) async {
+              print('📦 Got ${remoteCategories.length} categories from remote');
+              // Create a map of existing categories by name and ID for quick lookup
+              final existingCategoriesByName = {
+                for (var category in categories) category.name: category
+              };
+              final existingCategoriesById = {
+                for (var category in categories)
+                  if (category.id != null) category.id!: category
+              };
+
+              // Only add new categories that don't exist locally
+              for (var remote in remoteCategories) {
+                final existingByName = existingCategoriesByName[remote.name];
+                final existingById = remote.id != null
+                    ? existingCategoriesById[remote.id!]
+                    : null;
+
+                if (existingByName == null && existingById == null) {
+                  print('➕ Adding new category: ${remote.name}');
+                  categories.add(remote);
+                  await repository.cacheCategory(remote);
+                } else if (existingById != null && existingByName == null) {
+                  print(
+                      '🔄 Updating category name: ${existingById.name} -> ${remote.name}');
+                  final updatedCategory =
+                      existingById.copyWith(name: remote.name);
+                  await repository.updateCategory(updatedCategory);
+                  final index = categories.indexOf(existingById);
+                  if (index != -1) {
+                    categories[index] = updatedCategory;
+                  }
+                }
+              }
+
+              // Remove any duplicates
+              final updatedCategories =
+                  categories.fold<List<Category>>([], (unique, category) {
+                final exists = unique.any((c) =>
+                    c.name == category.name ||
+                    (c.id != null && c.id == category.id));
+                if (!exists) {
+                  unique.add(category);
+                }
+                return unique;
+              });
+
+              print('📦 Final category count: ${updatedCategories.length}');
+              // Emit updated state
+              if (!emit.isDone) {
+                emit(CategoryLoaded(updatedCategories));
+              }
+            },
+          );
+        },
       );
     } catch (e) {
+      print('❌ Error in _onGetCategories: $e');
       emit(CategoryError(e.toString()));
     }
   }

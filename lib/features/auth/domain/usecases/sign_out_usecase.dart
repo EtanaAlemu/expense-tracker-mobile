@@ -1,13 +1,15 @@
 import 'package:dartz/dartz.dart';
 import 'package:expense_tracker/core/error/failures.dart';
+import 'package:expense_tracker/core/usecase/usecase.dart';
 import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
-class SignOutUseCase {
+class SignOutUseCase extends UseCase<void, NoParams> {
   final AuthRepository repository;
 
   SignOutUseCase(this.repository);
 
-  Future<Either<Failure, void>> call() async {
+  @override
+  Future<Either<Failure, void>> call(NoParams params) async {
     return await repository.signOut();
   }
 }

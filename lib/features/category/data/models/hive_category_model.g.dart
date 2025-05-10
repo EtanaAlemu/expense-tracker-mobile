@@ -27,13 +27,14 @@ class HiveCategoryModelAdapter extends TypeAdapter<HiveCategoryModel> {
       createdAt: fields[7] as DateTime?,
       updatedAt: fields[8] as DateTime?,
       isDefault: fields[9] == null ? false : fields[9] as bool,
+      budget: fields[10] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveCategoryModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +54,9 @@ class HiveCategoryModelAdapter extends TypeAdapter<HiveCategoryModel> {
       ..writeByte(8)
       ..write(obj.updatedAt)
       ..writeByte(9)
-      ..write(obj.isDefault);
+      ..write(obj.isDefault)
+      ..writeByte(10)
+      ..write(obj.budget);
   }
 
   @override

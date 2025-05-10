@@ -34,6 +34,9 @@ class HiveCategoryModel {
   @HiveField(9, defaultValue: false)
   final bool isDefault;
 
+  @HiveField(10)
+  final double? budget;
+
   HiveCategoryModel({
     this.id,
     required this.name,
@@ -45,5 +48,6 @@ class HiveCategoryModel {
     this.createdAt,
     this.updatedAt,
     this.isDefault = false,
+    this.budget,
   });
 }

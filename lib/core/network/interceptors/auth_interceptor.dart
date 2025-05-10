@@ -3,20 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:get_it/get_it.dart';
 
 @injectable
 class AuthInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final context = options.extra['context'] as BuildContext?;
-    if (context != null) {
-      final authBloc = BlocProvider.of<AuthBloc>(context);
-      final token = authBloc.token;
+  final AuthBloc authBloc;
 
-      if (token != null) {
-        options.headers['Authorization'] = 'Bearer $token';
-      }
+  AuthInterceptor(this.authBloc);
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final state = authBloc.state;
+    if (state is AuthAuthenticated) {
+      options.headers['Authorization'] = 'Bearer ${state.token}';
     }
-    return super.onRequest(options, handler);
+    handler.next(options);
   }
 }

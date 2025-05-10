@@ -1,10 +1,11 @@
 import 'package:dartz/dartz.dart';
+import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
 import 'package:expense_tracker/core/error/failures.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 
 abstract class CategoryRepository {
   // Get all categories (local + remote)
-  Future<Either<Failure, List<Category>>> getCategories();
+  Future<Either<Failure, List<Category>>> getCategories(NoParams params);
 
   // Get only local categories
   Future<Either<Failure, List<Category>>> getLocalCategories();
@@ -13,13 +14,13 @@ abstract class CategoryRepository {
   Future<Either<Failure, List<Category>>> getRemoteCategories();
 
   // Get a single category
-  Future<Either<Failure, Category?>> getCategory(String id);
+  Future<Either<Failure, Category>> getCategory(String id);
 
   // Add a new category
   Future<Either<Failure, Category>> addCategory(Category category);
 
   // Update an existing category
-  Future<Either<Failure, void>> updateCategory(Category category);
+  Future<Either<Failure, Category>> updateCategory(Category category);
 
   // Delete a category
   Future<Either<Failure, void>> deleteCategory(Category category);

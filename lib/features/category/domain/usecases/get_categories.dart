@@ -11,14 +11,6 @@ class GetCategories implements BaseUseCase<List<Category>, NoParams> {
 
   @override
   Future<Either<Failure, List<Category>>> call(NoParams params) async {
-    try {
-      final categories = await repository.getCategories();
-      return categories.fold(
-        (failure) => Left(failure),
-        (categories) => Right(categories),
-      );
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
+    return repository.getCategories(params);
   }
 }

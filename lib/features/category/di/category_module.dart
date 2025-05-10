@@ -80,6 +80,7 @@ abstract class CategoryModule {
     UpdateCategory updateCategory,
     DeleteCategory deleteCategory,
     GetCategoriesByType getCategoriesByType,
+    CategoryRepository repository,
   ) =>
       CategoryBloc(
         getCategories: getCategories,
@@ -88,5 +89,6 @@ abstract class CategoryModule {
         updateCategory: updateCategory,
         deleteCategory: deleteCategory,
         getCategoriesByType: getCategoriesByType,
+        repository: repository,
       );
 }
