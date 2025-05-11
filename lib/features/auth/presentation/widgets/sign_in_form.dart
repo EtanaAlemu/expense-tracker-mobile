@@ -7,6 +7,7 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
 import 'package:expense_tracker/features/main/presentation/pages/main_screen.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class SignInForm extends StatefulWidget {
   const SignInForm({super.key});
@@ -42,6 +43,7 @@ class _SignInFormState extends State<SignInForm> {
   void _showForgotPasswordDialog(BuildContext context, ThemeData theme) {
     final TextEditingController emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
@@ -58,66 +60,30 @@ class _SignInFormState extends State<SignInForm> {
                 ),
               );
             } else if (state is AuthSuccess) {
-              // Close the password entry dialog
               Navigator.of(context).pop();
-
-              // Then show the "Reset Email Sent" dialog
-              await showDialog(
+              showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text(
-                    'Reset Email Sent',
+                    l10n.get('password_reset_sent'),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
                     ),
                   ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.mark_email_read,
-                        color: theme.colorScheme.primary,
-                        size: 64,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Password reset instructions have been sent to:',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        emailController.text,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Please check your inbox and follow the instructions.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'You can open your email app now.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                  content: Text(
+                    l10n.get('password_reset_sent_message'),
+                    style: theme.textTheme.bodyMedium,
                   ),
                   actions: [
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Close'),
+                      child: Text(l10n.get('close')),
                     ),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.email),
-                      label: const Text('Open Email App'),
+                      label: Text(l10n.get('open_email_app')),
                       onPressed: () {
                         Navigator.of(context).pop();
                         _launchEmail(emailController.text);
@@ -131,7 +97,7 @@ class _SignInFormState extends State<SignInForm> {
           builder: (context, state) {
             return AlertDialog(
               title: Text(
-                'Forgot Password',
+                l10n.get('forgot_password'),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -142,15 +108,15 @@ class _SignInFormState extends State<SignInForm> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Enter your email address and we\'ll send you a link to reset your password.',
+                      l10n.get('forgot_password_message'),
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: emailController,
                       decoration: InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email',
+                        labelText: l10n.get('email'),
+                        hintText: l10n.get('enter_email'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -158,16 +124,13 @@ class _SignInFormState extends State<SignInForm> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return l10n.get('email_required');
                         }
-
-                        // Simple email validation
                         final emailRegex =
                             RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                         if (!emailRegex.hasMatch(value)) {
-                          return 'Please enter a valid email';
+                          return l10n.get('invalid_email');
                         }
-
                         return null;
                       },
                     ),
@@ -179,7 +142,7 @@ class _SignInFormState extends State<SignInForm> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Cancel'),
+                  child: Text(l10n.get('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: state.isLoading
@@ -199,7 +162,7 @@ class _SignInFormState extends State<SignInForm> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Send Reset Link'),
+                      : Text(l10n.get('send_reset_link')),
                 ),
               ],
             );
@@ -262,6 +225,7 @@ class _SignInFormState extends State<SignInForm> {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     final inputDecoration = InputDecoration(
       border: OutlineInputBorder(
@@ -358,8 +322,8 @@ class _SignInFormState extends State<SignInForm> {
                     onFieldSubmitted: (_) =>
                         FocusScope.of(context).requestFocus(_passwordFocus),
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
+                      labelText: l10n.get('email'),
+                      hintText: l10n.get('enter_email'),
                       prefixIcon: Icon(Icons.email,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
@@ -371,7 +335,7 @@ class _SignInFormState extends State<SignInForm> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return l10n.get('email_required');
                       }
                       return null;
                     },
@@ -394,8 +358,8 @@ class _SignInFormState extends State<SignInForm> {
                     },
                     obscureText: _obscurePassword,
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
+                      labelText: l10n.get('password'),
+                      hintText: l10n.get('enter_password'),
                       prefixIcon: Icon(Icons.lock,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
@@ -419,7 +383,7 @@ class _SignInFormState extends State<SignInForm> {
                     style: theme.textTheme.bodyLarge,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return l10n.get('password_required');
                       }
                       return null;
                     },
@@ -438,7 +402,7 @@ class _SignInFormState extends State<SignInForm> {
                         },
                       ),
                       Text(
-                        'Remember me',
+                        l10n.get('remember_me'),
                         style: theme.textTheme.bodyMedium,
                       ),
                       const Spacer(),
@@ -452,7 +416,7 @@ class _SignInFormState extends State<SignInForm> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          'Forgot Password?',
+                          l10n.get('forgot_password'),
                           style: TextStyle(
                             color: primaryColor,
                             fontWeight: FontWeight.bold,
@@ -488,7 +452,7 @@ class _SignInFormState extends State<SignInForm> {
                       ),
                       child: state.isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('Sign In'),
+                          : Text(l10n.get('sign_in')),
                     ),
                   ),
                 ],

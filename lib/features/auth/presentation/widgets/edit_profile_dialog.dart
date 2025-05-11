@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class EditProfileDialog extends StatefulWidget {
   final Function(File?)? onImageSelected;
@@ -59,9 +60,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         widget.onImageSelected?.call(_imageFile);
       }
     } catch (e) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to pick image'),
+        SnackBar(
+          content: Text(l10n.get('image_pick_error')),
           backgroundColor: Colors.red,
         ),
       );
@@ -71,6 +73,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final state = context.watch<AuthBloc>().state;
     final currentUser = state is AuthAuthenticated ? state.user : null;
     final firstName = _firstNameController.text.isNotEmpty
@@ -82,7 +85,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
     return AlertDialog(
       title: Text(
-        'Edit Profile',
+        l10n.get('edit_profile'),
         style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
         ),
@@ -99,7 +102,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Error updating profile:'),
+                    Text(l10n.get('profile_update_error')),
                     const SizedBox(height: 4),
                     Text(
                       state.error!,
@@ -115,7 +118,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 action: SnackBarAction(
-                  label: 'Dismiss',
+                  label: l10n.get('dismiss'),
                   textColor: Colors.white,
                   onPressed: () {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -179,7 +182,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Error',
+                                l10n.get('error'),
                                 style: TextStyle(
                                   color: Colors.red.shade700,
                                   fontWeight: FontWeight.bold,
@@ -283,13 +286,13 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   TextFormField(
                     controller: _firstNameController,
                     enabled: !isLoading,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: l10n.get('first_name'),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your first name';
+                        return l10n.get('first_name_required');
                       }
                       return null;
                     },
@@ -300,13 +303,13 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   TextFormField(
                     controller: _lastNameController,
                     enabled: !isLoading,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: l10n.get('last_name'),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your last name';
+                        return l10n.get('last_name_required');
                       }
                       return null;
                     },
@@ -317,17 +320,17 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   TextFormField(
                     controller: _emailController,
                     enabled: !isLoading,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: l10n.get('email'),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return l10n.get('email_required');
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                           .hasMatch(value)) {
-                        return 'Please enter a valid email';
+                        return l10n.get('invalid_email');
                       }
                       return null;
                     },
@@ -341,7 +344,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       actions: [
         TextButton(
           onPressed: state.isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.get('cancel')),
         ),
         ElevatedButton(
           onPressed: state.isLoading
@@ -364,7 +367,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(l10n.get('save')),
         ),
       ],
     );

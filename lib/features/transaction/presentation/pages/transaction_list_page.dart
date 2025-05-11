@@ -9,7 +9,7 @@ import 'package:expense_tracker/features/transaction/presentation/pages/edit_tra
 import 'package:expense_tracker/features/transaction/presentation/widgets/transaction_list_item.dart';
 import 'package:expense_tracker/injection/injection.dart';
 import 'package:expense_tracker/features/transaction/domain/entities/transaction.dart';
-import 'package:intl/intl.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class TransactionListPage extends StatefulWidget {
   const TransactionListPage({super.key});
@@ -67,6 +67,8 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: BlocBuilder<TransactionBloc, TransactionState>(
         builder: (context, state) {
@@ -91,14 +93,14 @@ class _TransactionListPageState extends State<TransactionListPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No transactions yet',
+                      l10n.get('no_transactions'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Add your first transaction!',
+                      l10n.get('add_first_transaction'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.5),
                       ),

@@ -193,8 +193,8 @@ class CategoryMapper {
       'color': category.color,
       'type': category.type,
       'isDefault': category.isDefault,
-      'createdAt': category.createdAt?.toIso8601String(),
-      'updatedAt': category.updatedAt?.toIso8601String(),
+      'createdAt': category.createdAt.toIso8601String(),
+      'updatedAt': category.updatedAt.toIso8601String(),
     };
   }
 }

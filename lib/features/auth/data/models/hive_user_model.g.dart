@@ -21,15 +21,16 @@ class HiveUserModelAdapter extends TypeAdapter<HiveUserModel> {
       firstName: fields[1] as String,
       lastName: fields[2] as String,
       email: fields[3] as String,
-      image: fields[4] as String?,
-      currency: fields[5] as String?,
+      currency: fields[4] as String,
+      image: fields[5] as String?,
+      language: fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveUserModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -39,9 +40,11 @@ class HiveUserModelAdapter extends TypeAdapter<HiveUserModel> {
       ..writeByte(3)
       ..write(obj.email)
       ..writeByte(4)
-      ..write(obj.image)
+      ..write(obj.currency)
       ..writeByte(5)
-      ..write(obj.currency);
+      ..write(obj.image)
+      ..writeByte(6)
+      ..write(obj.language);
   }
 
   @override

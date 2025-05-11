@@ -12,8 +12,9 @@ class UserMapper {
       firstName: json['firstName']?.toString() ?? '',
       lastName: json['lastName']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
+      currency: json['currency']?.toString() ?? 'Birr',
       image: json['image']?.toString(),
-      currency: json['currency']?.toString(),
+      language: json['language']?.toString() ?? 'en',
     );
   }
 
@@ -23,32 +24,40 @@ class UserMapper {
       'firstName': user.firstName,
       'lastName': user.lastName,
       'email': user.email,
-      'image': user.image,
       'currency': user.currency,
+      'image': user.image,
+      'language': user.language,
     };
   }
 
   static Future<Map<String, dynamic>> toUpdateProfileJson(
-      UpdateUserParams params) async {
-    final Map<String, dynamic> data = toJson(params.user);
-
-    if (params.profilePicture != null) {
-      final compressedBytes = await _compressImage(params.profilePicture!);
-      final base64String = base64Encode(compressedBytes);
-      data['image'] = 'data:image/jpeg;base64,$base64String';
+      dynamic params) async {
+    if (params is UpdateUserParams) {
+      final json = toJson(params.user);
+      if (params.profilePicture != null) {
+        final compressedBytes = await _compressImage(params.profilePicture!);
+        final base64String = base64Encode(compressedBytes);
+        json['image'] = 'data:image/jpeg;base64,$base64String';
+      }
+      return json;
+    } else if (params is User) {
+      final json = toJson(params);
+      if (params.image != null && params.image!.startsWith('data:image/')) {
+        final base64Data = params.image!.split(',')[1];
+        final bytes = base64Decode(base64Data);
+        final compressedBytes = await FlutterImageCompress.compressWithList(
+          bytes,
+          minWidth: 800,
+          minHeight: 800,
+          quality: 80,
+        );
+        final compressedBase64 = base64Encode(compressedBytes);
+        json['image'] = 'data:image/jpeg;base64,$compressedBase64';
+      }
+      return json;
     }
-
-    return data;
-  }
-
-  static Future<List<int>> _compressImage(File file) async {
-    final result = await FlutterImageCompress.compressWithFile(
-      file.path,
-      minWidth: 512,
-      minHeight: 512,
-      quality: 60,
-    );
-    return result ?? await file.readAsBytes();
+    throw ArgumentError(
+        'Invalid parameter type. Expected UpdateUserParams or User.');
   }
 
   static HiveUserModel toHiveModel(User user) {
@@ -57,8 +66,9 @@ class UserMapper {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      image: user.image,
       currency: user.currency,
+      image: user.image,
+      language: user.language,
     );
   }
 
@@ -68,8 +78,19 @@ class UserMapper {
       firstName: model.firstName,
       lastName: model.lastName,
       email: model.email,
-      image: model.image,
       currency: model.currency,
+      image: model.image,
+      language: model.language,
     );
+  }
+
+  static Future<List<int>> _compressImage(File file) async {
+    final result = await FlutterImageCompress.compressWithFile(
+      file.path,
+      minWidth: 800,
+      minHeight: 800,
+      quality: 80,
+    );
+    return result ?? await file.readAsBytes();
   }
 }

@@ -10,6 +10,8 @@ import 'package:expense_tracker/features/auth/data/models/hive_user_model.dart';
 import 'package:expense_tracker/core/services/theme/theme_service.dart';
 import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:flutter/material.dart';
 
 @module
 abstract class CoreModule {
@@ -68,4 +70,7 @@ abstract class CoreModule {
 
   @singleton
   ThemeBloc themeBloc(ThemeService themeService) => ThemeBloc(themeService);
+
+  @singleton
+  AppLocalizations appLocalizations() => AppLocalizations(const Locale('en'));
 }

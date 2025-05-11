@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class AppearanceDialog extends StatelessWidget {
   const AppearanceDialog({super.key});
@@ -8,10 +9,11 @@ class AppearanceDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(
-        'Appearance',
+        l10n.get('appearance'),
         style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
         ),
@@ -22,7 +24,7 @@ class AppearanceDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<ThemeMode>(
-                title: const Text('System'),
+                title: Text(l10n.get('system_theme')),
                 value: ThemeMode.system,
                 groupValue:
                     state is ThemeLoaded ? state.themeMode : ThemeMode.system,
@@ -35,7 +37,7 @@ class AppearanceDialog extends StatelessWidget {
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: const Text('Light'),
+                title: Text(l10n.get('light_theme')),
                 value: ThemeMode.light,
                 groupValue:
                     state is ThemeLoaded ? state.themeMode : ThemeMode.system,
@@ -48,7 +50,7 @@ class AppearanceDialog extends StatelessWidget {
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: const Text('Dark'),
+                title: Text(l10n.get('dark_theme')),
                 value: ThemeMode.dark,
                 groupValue:
                     state is ThemeLoaded ? state.themeMode : ThemeMode.system,
@@ -67,7 +69,7 @@ class AppearanceDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l10n.get('close')),
         ),
       ],
     );

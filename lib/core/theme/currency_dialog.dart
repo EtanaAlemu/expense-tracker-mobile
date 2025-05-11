@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CurrencyDialog extends StatelessWidget {
   const CurrencyDialog({super.key});
@@ -10,10 +11,11 @@ class CurrencyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(
-        'Currency',
+        l10n.get('currency'),
         style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
         ),
@@ -28,49 +30,49 @@ class CurrencyDialog extends StatelessWidget {
               _buildCurrencyOption(
                 context,
                 'BIRR',
-                'Ethiopian Birr',
+                l10n.get('currency_birr'),
                 currentCurrency,
                 '🇪🇹',
               ),
               _buildCurrencyOption(
                 context,
                 'USD',
-                'US Dollar',
+                l10n.get('currency_usd'),
                 currentCurrency,
                 '🇺🇸',
               ),
               _buildCurrencyOption(
                 context,
                 'EUR',
-                'Euro',
+                l10n.get('currency_eur'),
                 currentCurrency,
                 '🇪🇺',
               ),
               _buildCurrencyOption(
                 context,
                 'GBP',
-                'British Pound',
+                l10n.get('currency_gbp'),
                 currentCurrency,
                 '🇬🇧',
               ),
               _buildCurrencyOption(
                 context,
                 'JPY',
-                'Japanese Yen',
+                l10n.get('currency_jpy'),
                 currentCurrency,
                 '🇯🇵',
               ),
               _buildCurrencyOption(
                 context,
                 'INR',
-                'Indian Rupee',
+                l10n.get('currency_inr'),
                 currentCurrency,
                 '🇮🇳',
               ),
               _buildCurrencyOption(
                 context,
                 'CNY',
-                'Chinese Yuan',
+                l10n.get('currency_cny'),
                 currentCurrency,
                 '🇨🇳',
               ),
@@ -81,7 +83,7 @@ class CurrencyDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(l10n.get('close')),
         ),
       ],
     );

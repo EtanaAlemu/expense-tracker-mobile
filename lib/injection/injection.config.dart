@@ -10,6 +10,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:dio/dio.dart' as _i361;
 import 'package:expense_tracker/core/di/core_module.dart' as _i370;
+import 'package:expense_tracker/core/localization/app_localizations.dart'
+    as _i21;
 import 'package:expense_tracker/core/network/api_service.dart' as _i102;
 import 'package:expense_tracker/core/network/interceptors/auth_interceptor.dart'
     as _i43;
@@ -225,6 +227,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i361.Dio>(() => coreModule.dio);
     gh.singleton<_i973.InternetConnectionChecker>(
         () => coreModule.connectionChecker());
+    gh.singleton<_i21.AppLocalizations>(() => coreModule.appLocalizations());
     gh.singleton<_i225.ThemeService>(
         () => coreModule.themeService(gh<_i460.SharedPreferences>()));
     gh.singleton<_i986.ThemeBloc>(
@@ -259,10 +262,16 @@ extension GetItInjectableX on _i174.GetIt {
       ),
       preResolve: true,
     );
+    gh.singleton<_i993.AuthRemoteDataSource>(
+        () => authModule.authRemoteDataSource(
+              gh<_i102.ApiService>(),
+              gh<_i21.AppLocalizations>(),
+            ));
     gh.singleton<_i420.CategoryRemoteDataSource>(
         () => categoryModule.categoryRemoteDataSource(
               gh<_i102.ApiService>(),
               gh<_i557.CategoryMapper>(),
+              gh<_i21.AppLocalizations>(),
             ));
     gh.singleton<_i709.TransactionRemoteDataSource>(
         () => transactionModule.transactionRemoteDataSource(
@@ -276,8 +285,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i668.TransactionMapper>(),
               gh<_i721.NetworkInfo>(),
             ));
-    gh.singleton<_i993.AuthRemoteDataSource>(
-        () => authModule.authRemoteDataSource(gh<_i102.ApiService>()));
     gh.singleton<_i664.AuthRepository>(() => authModule.authRepository(
           gh<_i993.AuthRemoteDataSource>(),
           gh<_i615.AuthLocalDataSource>(),
@@ -290,6 +297,7 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i420.CategoryRemoteDataSource>(),
               gh<_i557.CategoryMapper>(),
               gh<_i721.NetworkInfo>(),
+              gh<_i21.AppLocalizations>(),
             ));
     gh.lazySingleton<_i673.SignInUseCase>(
         () => authModule.signInUseCase(gh<_i664.AuthRepository>()));
@@ -333,15 +341,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => categoryModule.deleteCategory(gh<_i139.CategoryRepository>()));
     gh.singleton<_i667.GetCategoriesByType>(() =>
         categoryModule.getCategoriesByType(gh<_i139.CategoryRepository>()));
-    gh.factory<_i180.CategoryBloc>(() => categoryModule.categoryBloc(
-          gh<_i475.GetCategories>(),
-          gh<_i948.GetCategory>(),
-          gh<_i656.AddCategory>(),
-          gh<_i439.UpdateCategory>(),
-          gh<_i1060.DeleteCategory>(),
-          gh<_i667.GetCategoriesByType>(),
-          gh<_i139.CategoryRepository>(),
-        ));
     gh.singleton<_i882.AddTransaction>(() =>
         transactionModule.addTransaction(gh<_i89.TransactionRepository>()));
     gh.singleton<_i756.GetTransactions>(() =>
@@ -375,16 +374,26 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i353.GetCurrentUserUseCase>(),
           gh<_i1023.UpdateUserUseCase>(),
           gh<_i43.ChangePasswordUseCase>(),
-          gh<_i652.IsSignedInUseCase>(),
           gh<_i493.ValidateTokenUseCase>(),
           gh<_i917.CheckAuthStatusUseCase>(),
           gh<_i24.ClearRememberMeUseCase>(),
+          gh<_i21.AppLocalizations>(),
         ));
     gh.singleton<_i814.TransactionBloc>(() => transactionModule.transactionBloc(
           gh<_i756.GetTransactions>(),
           gh<_i882.AddTransaction>(),
           gh<_i251.UpdateTransaction>(),
           gh<_i675.DeleteTransaction>(),
+        ));
+    gh.factory<_i180.CategoryBloc>(() => categoryModule.categoryBloc(
+          gh<_i475.GetCategories>(),
+          gh<_i948.GetCategory>(),
+          gh<_i656.AddCategory>(),
+          gh<_i439.UpdateCategory>(),
+          gh<_i1060.DeleteCategory>(),
+          gh<_i667.GetCategoriesByType>(),
+          gh<_i139.CategoryRepository>(),
+          gh<_i21.AppLocalizations>(),
         ));
     gh.factory<_i43.AuthInterceptor>(
         () => _i43.AuthInterceptor(gh<_i985.AuthBloc>()));

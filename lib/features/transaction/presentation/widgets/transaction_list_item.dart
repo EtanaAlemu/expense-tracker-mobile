@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/features/transaction/domain/entities/transaction.dart';
-import 'package:expense_tracker/features/transaction/presentation/widgets/currency_text.dart';
+import 'package:expense_tracker/core/widgets/currency_text.dart';
 import 'package:intl/intl.dart';
 
 class TransactionListItem extends StatelessWidget {

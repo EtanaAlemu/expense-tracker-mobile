@@ -6,7 +6,7 @@ import 'package:expense_tracker/features/category/presentation/bloc/category_blo
 import 'package:expense_tracker/features/category/presentation/bloc/category_event.dart';
 import 'package:expense_tracker/core/theme/app_icons.dart';
 import 'package:expense_tracker/shared/widgets/app_button.dart';
-import 'package:expense_tracker/shared/widgets/currency.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CategoryFormDialog extends StatefulWidget {
   final Category? category;
@@ -61,6 +61,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.category != null;
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       scrollable: true,
@@ -69,7 +70,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            isEditing ? 'Edit Category' : 'New Category',
+            isEditing ? l10n.get('edit_category') : l10n.get('add_category'),
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
           if (isEditing && !widget.category!.isDefault)
@@ -80,13 +81,14 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Delete Category'),
-                    content: Text(
-                        'Are you sure you want to delete ${widget.category!.name}?'),
+                    title: Text(l10n.get('delete_category')),
+                    content: Text(l10n
+                        .get('delete_category_confirmation')
+                        .replaceAll('{name}', widget.category!.name)),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.get('cancel')),
                       ),
                       TextButton(
                         onPressed: () {
@@ -95,7 +97,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                               .add(DeleteCategory(widget.category!));
                           Navigator.pop(context);
                         },
-                        child: const Text('Delete'),
+                        child: Text(l10n.get('delete')),
                       ),
                     ],
                   ),
@@ -104,7 +106,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
             ),
         ],
       ),
-      content: SizedBox(
+      content: Container(
         width: MediaQuery.of(context).size.width,
         child: Form(
           key: _formKey,
@@ -131,8 +133,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     child: TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        labelText: 'Name',
-                        hintText: 'Enter Category name',
+                        labelText: l10n.get('category_name'),
+                        hintText: l10n.get('enter_category_name'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
@@ -141,8 +143,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                           horizontal: 15,
                         ),
                       ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Please enter a name' : null,
+                      validator: (value) => value?.isEmpty ?? true
+                          ? l10n.get('category_name_required')
+                          : null,
                     ),
                   ),
                 ],
@@ -172,7 +175,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                             borderRadius: BorderRadius.circular(45),
                           ),
                         ),
-                        child: const Text('Income'),
+                        child: Text(l10n.get('income_type')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -197,7 +200,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                             borderRadius: BorderRadius.circular(45),
                           ),
                         ),
-                        child: const Text('Expense'),
+                        child: Text(l10n.get('expense_type')),
                       ),
                     ),
                   ],
@@ -214,8 +217,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                           RegExp(r'^\d+\.?\d{0,4}')),
                     ],
                     decoration: InputDecoration(
-                      labelText: 'Budget',
-                      hintText: 'Enter budget',
+                      labelText: l10n.get('budget'),
+                      hintText: l10n.get('enter_budget'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -233,8 +236,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                   controller: _descriptionController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Description',
-                    hintText: 'Enter category description (optional)',
+                    labelText: l10n.get('description'),
+                    hintText: l10n.get('enter_description'),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -367,7 +370,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Save'),
+            child: Text(l10n.get('save')),
           ),
         ),
       ],

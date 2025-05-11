@@ -7,9 +7,9 @@ import 'package:expense_tracker/features/transaction/presentation/bloc/transacti
 import 'package:expense_tracker/features/category/presentation/bloc/category_bloc.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_event.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_state.dart';
-import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:expense_tracker/features/category/presentation/widgets/category_form_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class EditTransactionPage extends StatefulWidget {
   final Transaction transaction;
@@ -108,28 +108,30 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
   }
 
   void _validateForm() {
+    final l10n = AppLocalizations.of(context);
     _titleError = null;
     _amountError = null;
     _categoryError = null;
 
     if (_titleController.text.isEmpty) {
-      _titleError = "Title is required";
+      _titleError = l10n.get('required_field');
     }
 
     if (_amountController.text.isEmpty ||
         double.tryParse(_amountController.text) == null ||
         double.parse(_amountController.text) <= 0) {
-      _amountError = "Amount must be greater than 0";
+      _amountError = l10n.get('invalid_input');
     }
 
     if (_selectedCategoryId == null) {
-      _categoryError = "Please select a category";
+      _categoryError = l10n.get('select_category');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return BlocListener<TransactionBloc, TransactionState>(
       listener: (context, state) {
@@ -146,7 +148,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Transaction'),
+          title: Text(l10n.get('edit_transaction')),
           actions: [
             IconButton(
               icon: const Icon(Icons.delete),
@@ -154,13 +156,12 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                 showDialog(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    title: const Text('Delete Transaction'),
-                    content: const Text(
-                        'Are you sure you want to delete this transaction?'),
+                    title: Text(l10n.get('delete_transaction')),
+                    content: Text(l10n.get('delete_transaction_confirmation')),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.get('cancel')),
                       ),
                       TextButton(
                         onPressed: () {
@@ -172,7 +173,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
-                        child: const Text('Delete'),
+                        child: Text(l10n.get('delete')),
                       ),
                     ],
                   ),
@@ -219,7 +220,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                                     borderRadius: BorderRadius.circular(45),
                                   ),
                                 ),
-                                child: const Text('Income'),
+                                child: Text(l10n.get('income_type')),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -242,7 +243,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                                     borderRadius: BorderRadius.circular(45),
                                   ),
                                 ),
-                                child: const Text('Expense'),
+                                child: Text(l10n.get('expense_type')),
                               ),
                             ],
                           ),
@@ -252,7 +253,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                         TextFormField(
                           controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: 'Title',
+                            labelText: l10n.get('title'),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -260,7 +261,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter a title';
+                              return l10n.get('required_field');
                             }
                             return null;
                           },
@@ -271,7 +272,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                         TextFormField(
                           controller: _descriptionController,
                           decoration: InputDecoration(
-                            labelText: 'Description',
+                            labelText: l10n.get('description'),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -279,7 +280,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                           maxLines: null,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter a description';
+                              return l10n.get('required_field');
                             }
                             return null;
                           },
@@ -290,7 +291,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                         TextFormField(
                           controller: _amountController,
                           decoration: InputDecoration(
-                            labelText: 'Amount',
+                            labelText: l10n.get('enter_amount'),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -303,10 +304,10 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter an amount';
+                              return l10n.get('required_field');
                             }
                             if (double.tryParse(value) == null) {
-                              return 'Please enter a valid number';
+                              return l10n.get('invalid_input');
                             }
                             return null;
                           },
@@ -371,9 +372,9 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                           padding: const EdgeInsets.only(left: 15, bottom: 15),
                           child: Row(
                             children: [
-                              const Text(
-                                "Select Category",
-                                style: TextStyle(
+                              Text(
+                                l10n.get('select_category'),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
                                 ),
@@ -461,7 +462,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                                                   ),
                                                   const SizedBox(width: 10),
                                                   Text(
-                                                    "New Category",
+                                                    l10n.get('add_category'),
                                                     style: theme
                                                         .textTheme.bodyMedium,
                                                   ),
@@ -545,8 +546,8 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                                   }),
                                 );
                               }
-                              return const Center(
-                                  child: Text('No categories found'));
+                              return Center(
+                                  child: Text(l10n.get('no_categories')));
                             },
                           ),
                         ),
@@ -596,9 +597,9 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                 ),
                 child: _isSubmitting
                     ? const CircularProgressIndicator()
-                    : const Text(
-                        'Update Transaction',
-                        style: TextStyle(
+                    : Text(
+                        l10n.get('update_transaction'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

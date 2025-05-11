@@ -3,16 +3,20 @@ import 'package:expense_tracker/core/constants/api_constants.dart';
 import 'package:expense_tracker/features/category/data/mappers/category_mapper.dart';
 import 'package:expense_tracker/features/category/data/remote/category_remote_data_source.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   final ApiService _apiService;
   final CategoryMapper _mapper;
+  final AppLocalizations _l10n;
 
   CategoryRemoteDataSourceImpl({
     required ApiService apiService,
     required CategoryMapper mapper,
+    required AppLocalizations l10n,
   })  : _apiService = apiService,
-        _mapper = mapper;
+        _mapper = mapper,
+        _l10n = l10n;
 
   @override
   Future<Category> addCategory(Category category) async {
@@ -21,7 +25,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       data: _mapper.toApiModel(category),
     );
     if (response.statusCode != 201) {
-      throw Exception('Failed to save category');
+      throw Exception(_l10n.get('failed_to_save_category'));
     }
     return _mapper.toEntity(response.data);
   }
@@ -31,7 +35,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
     final response =
         await _apiService.dio.get('${ApiConstants.categories}/$id');
     if (response.statusCode != 200) {
-      throw Exception('Failed to get category');
+      throw Exception(_l10n.get('failed_to_get_category'));
     }
     return _mapper.toEntity(response.data);
   }
@@ -40,7 +44,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   Future<List<Category>> getCategories() async {
     final response = await _apiService.dio.get(ApiConstants.categories);
     if (response.statusCode != 200) {
-      throw Exception('Failed to get categories');
+      throw Exception(_l10n.get('failed_to_get_categories'));
     }
     print('API Response for categories: ${response.data}');
     return (response.data as List).map((json) {
@@ -56,19 +60,19 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       data: _mapper.toApiModel(category),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to update category');
+      throw Exception(_l10n.get('failed_to_update_category'));
     }
   }
 
   @override
   Future<void> deleteCategory(String id) async {
     if (id.isEmpty) {
-      throw Exception('Category ID is required');
+      throw Exception(_l10n.get('category_id_required'));
     }
     final response =
         await _apiService.dio.delete('${ApiConstants.categories}/$id');
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete category');
+      throw Exception(_l10n.get('failed_to_delete_category'));
     }
   }
 
@@ -82,7 +86,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       final List<dynamic> data = response.data;
       return data.map((json) => _mapper.toEntity(json)).toList();
     } catch (e) {
-      throw Exception('Failed to get categories by type: $e');
+      throw Exception('${_l10n.get('failed_to_get_categories_by_type')}: $e');
     }
   }
 }

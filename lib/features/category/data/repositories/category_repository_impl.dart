@@ -7,20 +7,22 @@ import 'package:expense_tracker/features/category/data/mappers/category_mapper.d
 import 'package:expense_tracker/features/category/data/remote/category_remote_data_source.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:expense_tracker/features/category/domain/repositories/category_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryLocalDataSource localDataSource;
   final CategoryRemoteDataSource remoteDataSource;
   final CategoryMapper mapper;
   final NetworkInfo networkInfo;
+  final AppLocalizations _l10n;
 
   CategoryRepositoryImpl({
     required this.localDataSource,
     required this.remoteDataSource,
     required this.mapper,
     required this.networkInfo,
-  });
+    required AppLocalizations l10n,
+  }) : _l10n = l10n;
 
   @override
   Future<Either<Failure, List<Category>>> getCategories(NoParams params) async {
@@ -45,16 +47,13 @@ class CategoryRepositoryImpl implements CategoryRepository {
                 for (var category in categories) category.name: category
               };
               final existingCategoriesById = {
-                for (var category in categories)
-                  if (category.id != null) category.id!: category
+                for (var category in categories) category.id: category
               };
 
               // Only add new categories that don't exist locally
               for (var remote in remoteCategories) {
                 final existingByName = existingCategoriesByName[remote.name];
-                final existingById = remote.id != null
-                    ? existingCategoriesById[remote.id!]
-                    : null;
+                final existingById = existingCategoriesById[remote.id];
 
                 if (existingByName == null && existingById == null) {
                   categories.add(remote);
@@ -74,9 +73,8 @@ class CategoryRepositoryImpl implements CategoryRepository {
               // Remove any duplicates (same name or ID)
               categories =
                   categories.fold<List<Category>>([], (unique, category) {
-                final exists = unique.any((c) =>
-                    c.name == category.name ||
-                    (c.id != null && c.id == category.id));
+                final exists = unique
+                    .any((c) => c.name == category.name || c.id == category.id);
                 if (!exists) {
                   unique.add(category);
                 }
@@ -99,14 +97,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
       final hiveModels = await localDataSource.getAll();
       return Right(hiveModels.map(mapper.toEntity).toList());
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(CacheFailure(_l10n.get('failed_to_cache_categories')));
     }
   }
 
   @override
   Future<Either<Failure, List<Category>>> getRemoteCategories() async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure('No internet connection'));
+      return Left(NetworkFailure(_l10n.get('no_internet_connection')));
     }
 
     try {
@@ -129,13 +127,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
       // Then try remote if we have internet
       if (await networkInfo.isConnected) {
         final remoteCategory = await remoteDataSource.getCategory(id);
-        if (remoteCategory != null) {
-          await cacheCategory(remoteCategory);
-          return Right(remoteCategory);
+        if (remoteCategory == null) {
+          return Left(CacheFailure(_l10n.get('category_not_found_cache')));
         }
+        await cacheCategory(remoteCategory);
+        return Right(remoteCategory);
       }
 
-      return Left(CacheFailure('Category not found'));
+      return Left(CacheFailure(_l10n.get('category_not_found_cache')));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -147,8 +146,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       print('➕ Adding category: ${category.name}');
 
       // Create a local ID using timestamp if not provided
-      final localId =
-          category.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final localId = category.id;
       print('📝 Generated local ID: $localId');
 
       // Create category with local ID and not synced flag
@@ -227,22 +225,22 @@ class CategoryRepositoryImpl implements CategoryRepository {
       print('🗑️ Deleting category: ${category.name} (${category.id})');
 
       // First delete locally
-      if (category.id != null && category.id!.isNotEmpty) {
+      if (category.id.isNotEmpty) {
         print('💾 Deleting from local storage with ID: ${category.id}');
         final hiveModel = mapper.toHiveModel(category);
         await localDataSource.delete(hiveModel);
         print('✅ Category deleted from local storage');
       } else {
         print('⚠️ Cannot delete from local storage: No ID provided');
-        return Left(ServerFailure('Category ID is required'));
+        return Left(ServerFailure(_l10n.get('category_id_required')));
       }
 
       // Then try to delete remotely if we have internet
       if (await networkInfo.isConnected) {
         final id = category.id;
-        if (id == null || id.isEmpty) {
+        if (id.isEmpty) {
           print('❌ Cannot delete from server: No ID provided');
-          return Left(ServerFailure('Category ID is required'));
+          return Left(ServerFailure(_l10n.get('category_id_required')));
         }
         print('🌐 Deleting from server with ID: $id');
         try {
@@ -311,16 +309,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
             for (var category in categories) category.name: category
           };
           final existingCategoriesById = {
-            for (var category in categories)
-              if (category.id != null) category.id!: category
+            for (var category in categories) category.id: category
           };
 
           print('🔄 Merging remote categories with local data...');
           // Only add new categories that don't exist locally
           for (var remote in remoteCategories) {
             final existingByName = existingCategoriesByName[remote.name];
-            final existingById =
-                remote.id != null ? existingCategoriesById[remote.id!] : null;
+            final existingById = existingCategoriesById[remote.id];
 
             if (existingByName == null && existingById == null) {
               print('➕ Adding new category: ${remote.name} (${remote.id})');
@@ -351,8 +347,8 @@ class CategoryRepositoryImpl implements CategoryRepository {
       // Remove any duplicates
       print('🧹 Removing duplicates...');
       categories = categories.fold<List<Category>>([], (unique, category) {
-        final exists = unique.any((c) =>
-            c.name == category.name || (c.id != null && c.id == category.id));
+        final exists =
+            unique.any((c) => c.name == category.name || c.id == category.id);
         if (!exists) {
           unique.add(category);
         } else {
@@ -378,7 +374,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       await localDataSource.save(hiveModel);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(CacheFailure(_l10n.get('failed_to_cache_category')));
     }
   }
 
@@ -390,63 +386,63 @@ class CategoryRepositoryImpl implements CategoryRepository {
       await localDataSource.saveAll(hiveModels);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(CacheFailure(_l10n.get('failed_to_cache_categories')));
     }
   }
 
   @override
   Future<Either<Failure, Category?>> getRemoteCategory(String id) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure('No internet connection'));
+      return Left(NetworkFailure(_l10n.get('no_internet_connection')));
     }
 
     try {
       final category = await remoteDataSource.getCategory(id);
       return Right(category);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(_l10n.get('failed_to_get_remote_category')));
     }
   }
 
   @override
   Future<Either<Failure, void>> addRemoteCategory(Category category) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure('No internet connection'));
+      return Left(NetworkFailure(_l10n.get('no_internet_connection')));
     }
 
     try {
       await remoteDataSource.addCategory(category);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(_l10n.get('failed_to_add_remote_category')));
     }
   }
 
   @override
   Future<Either<Failure, void>> updateRemoteCategory(Category category) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure('No internet connection'));
+      return Left(NetworkFailure(_l10n.get('no_internet_connection')));
     }
 
     try {
       await remoteDataSource.updateCategory(category);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(_l10n.get('failed_to_update_remote_category')));
     }
   }
 
   @override
   Future<Either<Failure, void>> deleteRemoteCategory(String id) async {
     if (!await networkInfo.isConnected) {
-      return Left(NetworkFailure('No internet connection'));
+      return Left(NetworkFailure(_l10n.get('no_internet_connection')));
     }
 
     try {
       await remoteDataSource.deleteCategory(id);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(_l10n.get('failed_to_delete_remote_category')));
     }
   }
 }

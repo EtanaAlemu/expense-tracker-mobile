@@ -1,6 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
-import 'package:expense_tracker/features/auth/domain/entities/user.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/forgot_password_usecase.dart';
@@ -11,7 +9,6 @@ import 'package:expense_tracker/features/auth/domain/usecases/get_token_usecase.
 import 'package:expense_tracker/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/update_user_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/change_password_usecase.dart';
-import 'package:expense_tracker/features/auth/domain/usecases/is_signed_in_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/validate_token_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/check_auth_status_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/clear_remember_me_usecase.dart';
@@ -19,7 +16,7 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart'
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
 import 'package:expense_tracker/core/usecase/usecase.dart';
 import 'package:expense_tracker/core/error/failures.dart';
-import 'package:expense_tracker/features/auth/data/datasources/local/auth_local_data_source.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase _signInUseCase;
@@ -32,10 +29,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetCurrentUserUseCase _getCurrentUserUseCase;
   final UpdateUserUseCase _updateUserUseCase;
   final ChangePasswordUseCase _changePasswordUseCase;
-  final IsSignedInUseCase _isSignedInUseCase;
   final ValidateTokenUseCase _validateTokenUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final ClearRememberMeUseCase _clearRememberMeUseCase;
+  final AppLocalizations _l10n;
 
   AuthBloc({
     required SignInUseCase signInUseCase,
@@ -48,10 +45,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required UpdateUserUseCase updateUserUseCase,
     required ChangePasswordUseCase changePasswordUseCase,
-    required IsSignedInUseCase isSignedInUseCase,
     required ValidateTokenUseCase validateTokenUseCase,
     required CheckAuthStatusUseCase checkAuthStatusUseCase,
     required ClearRememberMeUseCase clearRememberMeUseCase,
+    required AppLocalizations l10n,
   })  : _signInUseCase = signInUseCase,
         _signUpUseCase = signUpUseCase,
         _forgotPasswordUseCase = forgotPasswordUseCase,
@@ -62,10 +59,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _getCurrentUserUseCase = getCurrentUserUseCase,
         _updateUserUseCase = updateUserUseCase,
         _changePasswordUseCase = changePasswordUseCase,
-        _isSignedInUseCase = isSignedInUseCase,
         _validateTokenUseCase = validateTokenUseCase,
         _checkAuthStatusUseCase = checkAuthStatusUseCase,
         _clearRememberMeUseCase = clearRememberMeUseCase,
+        _l10n = l10n,
         super(const AuthInitial()) {
     on<SignInEvent>(_onSignIn);
     on<SignUpEvent>(_onSignUp);
@@ -77,6 +74,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<UpdateCurrencyEvent>(_onUpdateCurrency);
     on<ChangePasswordEvent>(_onChangePassword);
     on<UpdateProfileEvent>(_onUpdateProfile);
+    on<UpdateLanguageEvent>(_onUpdateLanguage);
   }
 
   Future<void> _onSignIn(SignInEvent event, Emitter<AuthState> emit) async {
@@ -90,19 +88,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
       await result.fold(
-        (failure) async => emit(AuthError(message: failure.message)),
+        (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
         (user) async {
           if (event.rememberMe) {
             final tokenResult = await _getTokenUseCase(NoParams());
             await tokenResult.fold(
-              (failure) async => emit(AuthError(message: failure.message)),
+              (failure) async =>
+                  emit(AuthError(message: _getErrorMessage(failure))),
               (token) async {
                 if (token != null) {
                   final validateResult = await _validateTokenUseCase(
                       ValidateTokenParams(token: token));
                   await validateResult.fold(
                     (failure) async =>
-                        emit(AuthError(message: failure.message)),
+                        emit(AuthError(message: _getErrorMessage(failure))),
                     (isValid) async {
                       if (isValid) {
                         emit(AuthAuthenticated(user: user, token: token));
@@ -124,8 +123,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
       );
     } catch (e) {
-      emit(AuthError(
-          message: 'An unexpected error occurred. Please try again.'));
+      emit(AuthError(message: _l10n.get('unexpected_error')));
     }
   }
 
@@ -142,11 +140,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       await result.fold(
-        (failure) async => emit(AuthError(message: failure.message)),
+        (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
         (user) async {
           final tokenResult = await _getTokenUseCase(NoParams());
           await tokenResult.fold(
-            (failure) async => emit(AuthError(message: failure.message)),
+            (failure) async =>
+                emit(AuthError(message: _getErrorMessage(failure))),
             (token) async {
               if (token != null) {
                 emit(AuthAuthenticated(user: user, token: token));
@@ -158,7 +157,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
       );
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      emit(AuthError(message: _l10n.get('unexpected_error')));
     }
   }
 
@@ -188,7 +187,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ForgotPasswordParams(email: event.email),
     );
     result.fold(
-      (failure) => emit(AuthError(message: failure.message)),
+      (failure) => emit(AuthError(message: _getErrorMessage(failure))),
       (message) => emit(AuthSuccess(message: message)),
     );
   }
@@ -205,7 +204,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
     result.fold(
-      (failure) => emit(AuthError(message: failure.message)),
+      (failure) => emit(AuthError(message: _getErrorMessage(failure))),
       (_) => emit(const AuthInitial()),
     );
   }
@@ -218,11 +217,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _signInAsGuestUseCase(NoParams());
 
     await result.fold(
-      (failure) async => emit(AuthError(message: failure.message)),
+      (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
       (user) async {
         final tokenResult = await _getTokenUseCase(NoParams());
         await tokenResult.fold(
-          (failure) async => emit(AuthError(message: failure.message)),
+          (failure) async =>
+              emit(AuthError(message: _getErrorMessage(failure))),
           (token) async {
             if (token != null) {
               emit(AuthAuthenticated(user: user, token: token));
@@ -261,7 +261,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           } else {
             emit(state.copyWith(
               isLoading: false,
-              error: 'Failed to retrieve user data. Please sign in again.',
+              error: _l10n.get('user_data_not_found'),
             ));
           }
         } else {
@@ -283,7 +283,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final result =
             await _updateUserUseCase(UpdateUserParams(user: updatedUser));
         await result.fold(
-          (failure) async => emit(AuthError(message: failure.message)),
+          (failure) async =>
+              emit(AuthError(message: _getErrorMessage(failure))),
           (user) async =>
               emit(AuthAuthenticated(user: user, token: state.token)),
         );
@@ -308,11 +309,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await result.fold(
           (failure) async {
             if (failure is ServerFailure) {
-              // Extract the error message from the server response
-              final errorMessage = failure.message;
               emit(currentState.copyWith(
                 isLoading: false,
-                error: errorMessage,
+                error: failure.message,
               ));
             } else {
               emit(currentState.copyWith(
@@ -322,17 +321,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             }
           },
           (_) async {
-            // Emit success state while preserving the authenticated state
             emit(currentState.copyWith(
               isLoading: false,
-              successMessage: 'Password changed successfully',
+              successMessage: _l10n.get('password_changed'),
             ));
           },
         );
       } catch (e) {
         emit(currentState.copyWith(
           isLoading: false,
-          error: e.toString(),
+          error: _l10n.get('unexpected_error'),
         ));
       }
     }
@@ -347,7 +345,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (currentState.user == null) {
         emit(currentState.copyWith(
           isLoading: false,
-          error: 'User data not found',
+          error: _l10n.get('user_data_not_found'),
         ));
         return;
       }
@@ -384,7 +382,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           (user) async {
             emit(currentState.copyWith(
               isLoading: false,
-              successMessage: 'Profile updated successfully',
+              successMessage: _l10n.get('profile_updated'),
               user: user,
             ));
           },
@@ -392,7 +390,46 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } catch (e) {
         emit(currentState.copyWith(
           isLoading: false,
-          error: e.toString(),
+          error: _l10n.get('unexpected_error'),
+        ));
+      }
+    }
+  }
+
+  void _onUpdateLanguage(
+      UpdateLanguageEvent event, Emitter<AuthState> emit) async {
+    final currentState = state;
+    if (currentState is AuthAuthenticated) {
+      try {
+        emit(currentState.copyWith(isLoading: true));
+
+        if (currentState.user == null) {
+          emit(currentState.copyWith(
+            isLoading: false,
+            error: _l10n.get('user_data_not_found'),
+          ));
+          return;
+        }
+
+        final updatedUser =
+            currentState.user!.copyWith(language: event.language);
+        final result =
+            await _updateUserUseCase(UpdateUserParams(user: updatedUser));
+
+        result.fold(
+          (failure) => emit(currentState.copyWith(
+            isLoading: false,
+            error: _getErrorMessage(failure),
+          )),
+          (user) => emit(AuthAuthenticated(
+            user: user,
+            isLoading: false,
+          )),
+        );
+      } catch (e) {
+        emit(currentState.copyWith(
+          isLoading: false,
+          error: _l10n.get('unexpected_error'),
         ));
       }
     }
@@ -405,7 +442,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       case CacheFailure:
         return failure.message;
       default:
-        return 'An unexpected error occurred';
+        return _l10n.get('unexpected_error');
     }
   }
 }

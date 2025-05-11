@@ -112,3 +112,12 @@ class UpdateProfileEvent extends AuthEvent {
   @override
   List<Object?> get props => [firstName, lastName, email, profilePicture];
 }
+
+class UpdateLanguageEvent extends AuthEvent {
+  final String language;
+
+  const UpdateLanguageEvent(this.language);
+
+  @override
+  List<Object?> get props => [language];
+}

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/shared/widgets/app_button.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -22,8 +26,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthCubit>().forgotPassword(
-            email: _emailController.text.trim(),
+      context.read<AuthBloc>().add(
+            ForgotPasswordEvent(_emailController.text.trim()),
           );
       setState(() {
         _isResetSent = true;
@@ -33,9 +37,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        title: Text(l10n.get('reset_password')),
       ),
       body: SafeArea(
         child: Padding(
@@ -51,13 +57,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Reset Link Sent',
+                      l10n.get('reset_link_sent'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'We have sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.',
+                    Text(
+                      l10n.get('reset_link_sent_message'),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -65,7 +71,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Back to Sign In'),
+                      child: Text(l10n.get('back_to_sign_in')),
                     ),
                   ],
                 )
@@ -75,41 +81,41 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Forgot Password?',
+                        l10n.get('forgot_password'),
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Enter your email address and we will send you a link to reset your password.',
+                      Text(
+                        l10n.get('forgot_password_message'),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'Enter your email',
-                          prefixIcon: Icon(Icons.email_outlined),
+                        decoration: InputDecoration(
+                          labelText: l10n.get('email'),
+                          hintText: l10n.get('enter_email'),
+                          prefixIcon: const Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.get('required_field');
                           }
                           if (!value.contains('@') || !value.contains('.')) {
-                            return 'Please enter a valid email';
+                            return l10n.get('invalid_email');
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 24),
-                      BlocBuilder<AuthCubit, AuthState>(
+                      BlocBuilder<AuthBloc, AuthState>(
                         builder: (context, state) {
                           return AppButton(
                             onPressed: state.isLoading ? null : _submitForm,
                             isLoading: state.isLoading,
-                            child: const Text('Send Reset Link'),
+                            child: Text(l10n.get('send_reset_link')),
                           );
                         },
                       ),

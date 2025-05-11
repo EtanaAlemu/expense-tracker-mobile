@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -54,42 +55,54 @@ class _SignUpFormState extends State<SignUpForm> {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     final inputDecoration = InputDecoration(
-      filled: true,
-      fillColor: isDark ? theme.cardColor.withOpacity(0.2) : theme.cardColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-            color: isDark ? Colors.transparent : theme.dividerColor, width: 1),
+          color: theme.dividerColor,
+          width: 1,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-            color: isDark
-                ? Colors.transparent
-                : theme.dividerColor.withOpacity(0.5),
-            width: 1),
+          color: theme.dividerColor,
+          width: 1,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: primaryColor, width: 1.5),
+        borderSide: BorderSide(
+          color: primaryColor,
+          width: 2,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.error, width: 1),
+        borderSide: BorderSide(
+          color: theme.colorScheme.error,
+          width: 1,
+        ),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
+        borderSide: BorderSide(
+          color: theme.colorScheme.error,
+          width: 2,
+        ),
       ),
+      filled: true,
+      fillColor: isDark ? theme.cardColor.withOpacity(0.2) : theme.cardColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
 
     return BlocConsumer<AuthBloc, AuthState>(
       listenWhen: (previous, current) =>
           previous.error != current.error ||
-          previous.isLoading != current.isLoading,
+          previous.isLoading != current.isLoading ||
+          previous.isAuthenticated != current.isAuthenticated,
       listener: (context, state) {
         if (state.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +116,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 borderRadius: BorderRadius.circular(10),
               ),
               action: SnackBarAction(
-                label: 'Dismiss',
+                label: l10n.get('dismiss'),
                 textColor: Colors.white,
                 onPressed: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -123,7 +136,6 @@ class _SignUpFormState extends State<SignUpForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // First Name field
                   TextFormField(
                     controller: _firstNameController,
                     focusNode: _firstNameFocus,
@@ -131,8 +143,8 @@ class _SignUpFormState extends State<SignUpForm> {
                     onFieldSubmitted: (_) =>
                         FocusScope.of(context).requestFocus(_lastNameFocus),
                     decoration: inputDecoration.copyWith(
-                      labelText: 'First Name',
-                      hintText: 'Enter your first name',
+                      labelText: l10n.get('first_name'),
+                      hintText: l10n.get('enter_first_name'),
                       prefixIcon: Icon(Icons.person,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
@@ -143,14 +155,12 @@ class _SignUpFormState extends State<SignUpForm> {
                     style: theme.textTheme.bodyLarge,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your first name';
+                        return l10n.get('first_name_required');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Last Name field
                   TextFormField(
                     controller: _lastNameController,
                     focusNode: _lastNameFocus,
@@ -158,9 +168,9 @@ class _SignUpFormState extends State<SignUpForm> {
                     onFieldSubmitted: (_) =>
                         FocusScope.of(context).requestFocus(_emailFocus),
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Last Name',
-                      hintText: 'Enter your last name',
-                      prefixIcon: Icon(Icons.person_outline,
+                      labelText: l10n.get('last_name'),
+                      hintText: l10n.get('enter_last_name'),
+                      prefixIcon: Icon(Icons.person,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
                           TextStyle(color: theme.textTheme.bodyLarge?.color),
@@ -170,14 +180,12 @@ class _SignUpFormState extends State<SignUpForm> {
                     style: theme.textTheme.bodyLarge,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your last name';
+                        return l10n.get('last_name_required');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Email field
                   TextFormField(
                     controller: _emailController,
                     focusNode: _emailFocus,
@@ -185,8 +193,8 @@ class _SignUpFormState extends State<SignUpForm> {
                     onFieldSubmitted: (_) =>
                         FocusScope.of(context).requestFocus(_passwordFocus),
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
+                      labelText: l10n.get('email'),
+                      hintText: l10n.get('enter_email'),
                       prefixIcon: Icon(Icons.email,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
@@ -198,18 +206,16 @@ class _SignUpFormState extends State<SignUpForm> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return l10n.get('email_required');
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                           .hasMatch(value)) {
-                        return 'Please enter a valid email address';
+                        return l10n.get('invalid_email');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Password field
                   TextFormField(
                     controller: _passwordController,
                     focusNode: _passwordFocus,
@@ -218,8 +224,8 @@ class _SignUpFormState extends State<SignUpForm> {
                         .requestFocus(_confirmPasswordFocus),
                     obscureText: _obscurePassword,
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
+                      labelText: l10n.get('password'),
+                      hintText: l10n.get('enter_password'),
                       prefixIcon: Icon(Icons.lock,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
@@ -243,17 +249,15 @@ class _SignUpFormState extends State<SignUpForm> {
                     style: theme.textTheme.bodyLarge,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return l10n.get('password_required');
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return l10n.get('invalid_password');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Confirm Password field
                   TextFormField(
                     controller: _confirmPasswordController,
                     focusNode: _confirmPasswordFocus,
@@ -272,9 +276,9 @@ class _SignUpFormState extends State<SignUpForm> {
                     },
                     obscureText: _obscureConfirmPassword,
                     decoration: inputDecoration.copyWith(
-                      labelText: 'Confirm Password',
-                      hintText: 'Confirm your password',
-                      prefixIcon: Icon(Icons.lock_outline,
+                      labelText: l10n.get('confirm_password'),
+                      hintText: l10n.get('enter_confirm_password'),
+                      prefixIcon: Icon(Icons.lock,
                           color: theme.iconTheme.color?.withOpacity(0.7)),
                       labelStyle:
                           TextStyle(color: theme.textTheme.bodyLarge?.color),
@@ -297,22 +301,19 @@ class _SignUpFormState extends State<SignUpForm> {
                     style: theme.textTheme.bodyLarge,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
+                        return l10n.get('confirm_password_required');
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords do not match';
+                        return l10n.get('passwords_dont_match');
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // Terms and conditions
                   Row(
                     children: [
                       Checkbox(
                         value: _acceptTerms,
-                        activeColor: primaryColor,
                         onChanged: (value) {
                           setState(() {
                             _acceptTerms = value ?? false;
@@ -321,18 +322,13 @@ class _SignUpFormState extends State<SignUpForm> {
                       ),
                       Expanded(
                         child: Text(
-                          'I accept the Terms and Conditions',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.7),
-                          ),
+                          l10n.get('accept_terms'),
+                          style: theme.textTheme.bodyMedium,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Sign up button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -358,7 +354,7 @@ class _SignUpFormState extends State<SignUpForm> {
                       ),
                       child: state.isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('Sign Up'),
+                          : Text(l10n.get('sign_up')),
                     ),
                   ),
                 ],

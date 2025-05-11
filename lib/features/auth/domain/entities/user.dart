@@ -6,8 +6,9 @@ class User extends Equatable {
   final String firstName;
   final String lastName;
   final String? image;
-  final String? currency;
+  final String currency;
   final bool isGuest;
+  final String language;
 
   const User({
     required this.id,
@@ -15,8 +16,9 @@ class User extends Equatable {
     required this.firstName,
     required this.lastName,
     this.image,
-    this.currency,
+    required this.currency,
     this.isGuest = false,
+    this.language = 'en',
   });
 
   User copyWith({
@@ -27,6 +29,7 @@ class User extends Equatable {
     String? image,
     String? currency,
     bool? isGuest,
+    String? language,
   }) {
     return User(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class User extends Equatable {
       image: image ?? this.image,
       currency: currency ?? this.currency,
       isGuest: isGuest ?? this.isGuest,
+      language: language ?? this.language,
     );
   }
 
@@ -57,7 +61,7 @@ class User extends Equatable {
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       image: json['image'] as String?,
-      currency: json['currency'] as String?,
+      currency: json['currency'] as String,
     );
   }
 
@@ -70,5 +74,6 @@ class User extends Equatable {
         image,
         currency,
         isGuest,
+        language,
       ];
 }

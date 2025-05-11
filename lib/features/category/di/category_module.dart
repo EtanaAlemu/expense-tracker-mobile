@@ -14,6 +14,7 @@ import 'package:expense_tracker/features/category/domain/usecases/get_categories
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart';
 import 'package:expense_tracker/features/category/domain/usecases/update_category.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_bloc.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 @module
 abstract class CategoryModule {
@@ -28,10 +29,12 @@ abstract class CategoryModule {
   CategoryRemoteDataSource categoryRemoteDataSource(
     ApiService apiService,
     CategoryMapper mapper,
+    AppLocalizations l10n,
   ) =>
       CategoryRemoteDataSourceImpl(
         apiService: apiService,
         mapper: mapper,
+        l10n: l10n,
       );
 
   @singleton
@@ -40,12 +43,14 @@ abstract class CategoryModule {
     CategoryRemoteDataSource remoteDataSource,
     CategoryMapper mapper,
     NetworkInfo networkInfo,
+    AppLocalizations l10n,
   ) =>
       CategoryRepositoryImpl(
         localDataSource: localDataSource,
         remoteDataSource: remoteDataSource,
         mapper: mapper,
         networkInfo: networkInfo,
+        l10n: l10n,
       );
 
   @singleton
@@ -81,6 +86,7 @@ abstract class CategoryModule {
     DeleteCategory deleteCategory,
     GetCategoriesByType getCategoriesByType,
     CategoryRepository repository,
+    AppLocalizations l10n,
   ) =>
       CategoryBloc(
         getCategories: getCategories,
@@ -90,5 +96,6 @@ abstract class CategoryModule {
         deleteCategory: deleteCategory,
         getCategoriesByType: getCategoriesByType,
         repository: repository,
+        l10n: l10n,
       );
 }

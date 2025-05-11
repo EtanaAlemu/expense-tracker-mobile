@@ -26,6 +26,7 @@ import 'package:expense_tracker/features/auth/domain/usecases/check_remember_me_
 import 'package:expense_tracker/features/auth/domain/usecases/check_auth_status_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/validate_token_on_start_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/clear_remember_me_usecase.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 @module
 abstract class AuthModule {
@@ -42,8 +43,11 @@ abstract class AuthModule {
       );
 
   @singleton
-  AuthRemoteDataSource authRemoteDataSource(ApiService apiService) =>
-      AuthRemoteDataSourceImpl(apiService);
+  AuthRemoteDataSource authRemoteDataSource(
+    ApiService apiService,
+    AppLocalizations l10n,
+  ) =>
+      AuthRemoteDataSourceImpl(apiService, l10n);
 
   @singleton
   AuthRepository authRepository(
@@ -144,10 +148,10 @@ abstract class AuthModule {
     GetCurrentUserUseCase getCurrentUserUseCase,
     UpdateUserUseCase updateUserUseCase,
     ChangePasswordUseCase changePasswordUseCase,
-    IsSignedInUseCase isSignedInUseCase,
     ValidateTokenUseCase validateTokenUseCase,
     CheckAuthStatusUseCase checkAuthStatusUseCase,
     ClearRememberMeUseCase clearRememberMeUseCase,
+    AppLocalizations l10n,
   ) =>
       AuthBloc(
         signInUseCase: signInUseCase,
@@ -160,9 +164,9 @@ abstract class AuthModule {
         getCurrentUserUseCase: getCurrentUserUseCase,
         updateUserUseCase: updateUserUseCase,
         changePasswordUseCase: changePasswordUseCase,
-        isSignedInUseCase: isSignedInUseCase,
         validateTokenUseCase: validateTokenUseCase,
         checkAuthStatusUseCase: checkAuthStatusUseCase,
         clearRememberMeUseCase: clearRememberMeUseCase,
+        l10n: l10n,
       );
 }

@@ -6,6 +6,7 @@ import 'package:expense_tracker/features/category/presentation/bloc/category_blo
 import 'package:expense_tracker/features/category/presentation/bloc/category_event.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_state.dart';
 import 'package:expense_tracker/features/category/presentation/widgets/category_form_dialog.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -47,12 +48,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: BlocBuilder<CategoryBloc, CategoryState>(
         builder: (context, state) {
           print('🔄 CategoriesPage state: $state');
           if (state is CategoryLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: Text(l10n.get('loading')));
           } else if (state is CategoryLoaded) {
             print(
                 '📦 CategoriesPage loaded ${state.categories.length} categories');
@@ -72,7 +74,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             return Center(child: Text(state.message));
           }
           print('ℹ️ CategoriesPage initial state');
-          return const Center(child: Text('No categories found'));
+          return Center(child: Text(l10n.get('no_data')));
         },
       ),
       floatingActionButton: AnimatedSlide(
@@ -96,6 +98,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   Widget _buildCategoryList(BuildContext context, List<Category> categories) {
+    final l10n = AppLocalizations.of(context);
     return ListView.builder(
       controller: _scrollController,
       itemCount: categories.length,
@@ -110,7 +113,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
             ),
           ),
           title: Text(category.name),
-          subtitle: Text(category.type),
+          subtitle: Text(category.type == 'Expense'
+              ? l10n.get('expense_type')
+              : l10n.get('income_type')),
           onTap: category.isDefault
               ? null
               : () => _showEditCategoryDialog(context, category),
@@ -123,29 +128,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     showDialog(
       context: context,
       builder: (context) => CategoryFormDialog(category: category),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context, Category category) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: Text('Are you sure you want to delete ${category.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<CategoryBloc>().add(DeleteCategory(category));
-              Navigator.pop(context);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 }

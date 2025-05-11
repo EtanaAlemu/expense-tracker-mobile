@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:expense_tracker/core/constants/api_constants.dart';
 import 'package:expense_tracker/core/error/exceptions.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 import 'package:expense_tracker/core/network/api_service.dart';
 import 'package:expense_tracker/features/auth/data/models/api/auth_response_model.dart';
-import 'package:expense_tracker/features/auth/data/models/api/forgot_password_request_model.dart';
-import 'package:expense_tracker/features/auth/data/models/api/forgot_password_response_model.dart';
 import 'package:expense_tracker/features/auth/data/models/api/reset_password_request_model.dart';
 import 'package:expense_tracker/features/auth/data/models/api/reset_password_response_model.dart';
 import 'package:expense_tracker/features/auth/data/models/api/sign_in_request_model.dart';
@@ -14,8 +13,9 @@ import 'package:expense_tracker/features/auth/data/datasources/remote/auth_remot
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiService _apiService;
+  final AppLocalizations _l10n;
 
-  AuthRemoteDataSourceImpl(this._apiService);
+  AuthRemoteDataSourceImpl(this._apiService, this._l10n);
 
   @override
   Future<AuthResponseModel> signIn(SignInRequestModel request) async {
@@ -75,13 +75,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode != 200) {
-        throw AuthException(
-            'Failed to change password: ${response.statusMessage}');
+        throw AuthException(_l10n.get('change_password_failed'));
       }
-    } on DioException catch (e) {
-      throw AuthException('Failed to change password: ${e.message}');
-    } catch (e) {
-      throw AuthException('Failed to change password: $e');
+    } on DioException catch (_) {
+      throw AuthException(_l10n.get('change_password_failed'));
+    } catch (_) {
+      throw AuthException(_l10n.get('change_password_failed'));
     }
   }
 
@@ -136,7 +135,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData) async {
+  Future<Map<String, dynamic>> updateProfile(
+      Map<String, dynamic> userData) async {
     try {
       final response = await _apiService.dio.put(
         ApiConstants.updateProfile,

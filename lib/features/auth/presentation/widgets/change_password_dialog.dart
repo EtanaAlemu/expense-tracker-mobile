@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -32,10 +33,11 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(
-        'Change Password',
+        l10n.get('change_password'),
         style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
         ),
@@ -57,7 +59,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 action: SnackBarAction(
-                  label: 'Dismiss',
+                  label: l10n.get('dismiss'),
                   textColor: Colors.white,
                   onPressed: () {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -65,8 +67,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 ),
               ),
             );
-          } else if (state.successMessage != null) {
-            // Show success message first
+          }
+          if (state.successMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.successMessage!),
@@ -79,7 +81,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 ),
               ),
             );
-            // Then close the dialog after a short delay
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
                 Navigator.of(context).pop();
@@ -110,7 +111,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     obscureText: _obscureCurrentPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
-                      labelText: 'Current Password',
+                      labelText: l10n.get('current_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -130,7 +131,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your current password';
+                        return l10n.get('current_password_required');
                       }
                       return null;
                     },
@@ -143,7 +144,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     obscureText: _obscureNewPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
-                      labelText: 'New Password',
+                      labelText: l10n.get('new_password'),
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -162,10 +163,10 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a new password';
+                        return l10n.get('new_password_required');
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return l10n.get('invalid_password');
                       }
                       return null;
                     },
@@ -178,7 +179,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     obscureText: _obscureConfirmPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
-                      labelText: 'Confirm New Password',
+                      labelText: l10n.get('confirm_new_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -198,10 +199,10 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm your new password';
+                        return l10n.get('confirm_password_required');
                       }
                       if (value != _newPasswordController.text) {
-                        return 'Passwords do not match';
+                        return l10n.get('passwords_dont_match');
                       }
                       return null;
                     },
@@ -218,7 +219,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             return TextButton(
               onPressed:
                   state.isLoading ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.get('cancel')),
             );
           },
         ),
@@ -247,7 +248,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Text('Change Password'),
+                  : Text(l10n.get('change_password')),
             );
           },
         ),

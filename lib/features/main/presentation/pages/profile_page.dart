@@ -8,8 +8,10 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart'
 import 'package:expense_tracker/shared/widgets/confirm_dialog.dart';
 import 'package:expense_tracker/core/theme/appearance_dialog.dart';
 import 'package:expense_tracker/core/theme/currency_dialog.dart';
+import 'package:expense_tracker/core/theme/language_dialog.dart';
 import 'package:expense_tracker/features/auth/presentation/widgets/change_password_dialog.dart';
 import 'package:expense_tracker/features/auth/presentation/widgets/edit_profile_dialog.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -121,13 +123,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _showLogoutDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => ConfirmDialog(
-        title: 'Logout',
-        message: 'Are you sure you want to logout?',
-        confirmLabel: 'Logout',
-        cancelLabel: 'Cancel',
+        title: l10n.get('logout'),
+        message: l10n.get('logout_confirmation'),
+        confirmLabel: l10n.get('logout'),
+        cancelLabel: l10n.get('cancel'),
       ),
     );
 
@@ -150,9 +153,30 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const LanguageDialog(),
+    );
+  }
+
+  String _getLanguageName(String code) {
+    switch (code) {
+      case 'en':
+        return 'English';
+      case 'am':
+        return 'አማርኛ';
+      case 'om':
+        return 'Afaan Oromoo';
+      default:
+        return 'English';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
@@ -290,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: Text(
-                            'Account Settings',
+                            l10n.get('account_settings'),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -324,10 +348,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: theme.colorScheme.primary,
                                   ),
                                 ),
-                                title: const Text('Edit Profile'),
+                                title: Text(l10n.get('edit_profile')),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () {
-                                  // TODO: Navigate to edit profile
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => EditProfileDialog(
+                                      onImageSelected: _updateLocalImage,
+                                    ),
+                                  );
                                 },
                               ),
                               const Divider(
@@ -349,7 +378,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: theme.colorScheme.primary,
                                   ),
                                 ),
-                                title: const Text('Change Password'),
+                                title: Text(l10n.get('change_password')),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () {
                                   showDialog(
@@ -368,7 +397,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: Text(
-                            'Preferences',
+                            l10n.get('preferences'),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -402,7 +431,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: theme.colorScheme.primary,
                                   ),
                                 ),
-                                title: const Text('Appearance'),
+                                title: Text(l10n.get('appearance')),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () => _showThemeDialog(context),
                               ),
@@ -423,7 +452,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: theme.colorScheme.primary,
                                   ),
                                 ),
-                                title: const Text('Currency'),
+                                title: Text(l10n.get('currency')),
                                 subtitle: Text(
                                   user?.currency ?? 'Birr',
                                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -432,6 +461,33 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () => _showCurrencyDialog(context),
+                              ),
+                              ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.language,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                title: Text(l10n.get('language')),
+                                subtitle: Text(
+                                  _getLanguageName(user?.language ?? 'en'),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => _showLanguageDialog(context),
                               ),
                             ],
                           ),
@@ -445,7 +501,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: ElevatedButton.icon(
                             onPressed: () => _showLogoutDialog(context),
                             icon: const Icon(Icons.logout),
-                            label: const Text('Sign Out'),
+                            label: Text(l10n.get('sign_out')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.colorScheme.error,
                               foregroundColor: theme.colorScheme.onError,

@@ -17,6 +17,7 @@ import 'package:expense_tracker/features/category/domain/usecases/get_categories
     as get_categories_by_type;
 import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
 import 'package:expense_tracker/features/category/domain/repositories/category_repository.dart';
+import 'package:expense_tracker/core/localization/app_localizations.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final get_categories.GetCategories getCategories;
@@ -26,6 +27,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final delete_category.DeleteCategory deleteCategory;
   final get_categories_by_type.GetCategoriesByType getCategoriesByType;
   final CategoryRepository repository;
+  final AppLocalizations l10n;
 
   CategoryBloc({
     required this.getCategories,
@@ -35,6 +37,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     required this.deleteCategory,
     required this.getCategoriesByType,
     required this.repository,
+    required this.l10n,
   }) : super(CategoryInitial()) {
     on<GetCategories>(_onGetCategories);
     on<GetCategory>(_onGetCategory);
@@ -75,16 +78,13 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
                 for (var category in categories) category.name: category
               };
               final existingCategoriesById = {
-                for (var category in categories)
-                  if (category.id != null) category.id!: category
+                for (var category in categories) category.id: category
               };
 
               // Only add new categories that don't exist locally
               for (var remote in remoteCategories) {
                 final existingByName = existingCategoriesByName[remote.name];
-                final existingById = remote.id != null
-                    ? existingCategoriesById[remote.id!]
-                    : null;
+                final existingById = existingCategoriesById[remote.id];
 
                 if (existingByName == null && existingById == null) {
                   print('➕ Adding new category: ${remote.name}');
@@ -106,9 +106,8 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
               // Remove any duplicates
               final updatedCategories =
                   categories.fold<List<Category>>([], (unique, category) {
-                final exists = unique.any((c) =>
-                    c.name == category.name ||
-                    (c.id != null && c.id == category.id));
+                final exists = unique
+                    .any((c) => c.name == category.name || c.id == category.id);
                 if (!exists) {
                   unique.add(category);
                 }
@@ -178,7 +177,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
                 final key = '${category.name}_${category.type}';
                 // If we find a category with the same name and type, prefer the one with remote ID
                 if (!categoryMap.containsKey(key) ||
-                    (category.id != null && category.id!.startsWith('681'))) {
+                    category.id.startsWith('681')) {
                   categoryMap[key] = category;
                 }
               }
@@ -206,23 +205,23 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      if (event.category.id == null || event.category.id!.isEmpty) {
-        emit(CategoryError('Category ID is required'));
+      if (event.category.id.isEmpty) {
+        emit(CategoryError(l10n.get('category_id_required')));
         return;
       }
 
       final categoryResult =
-          await getCategory(get_category.Params(id: event.category.id!));
+          await getCategory(get_category.Params(id: event.category.id));
       await categoryResult.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (category) async {
           if (category == null) {
-            emit(CategoryError('Category not found'));
+            emit(CategoryError(l10n.get('category_not_found')));
             return;
           }
 
           if (category.isDefault) {
-            emit(CategoryError('Cannot update default categories'));
+            emit(CategoryError(l10n.get('cannot_update_default')));
             return;
           }
 
@@ -253,14 +252,14 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      if (event.category.id == null || event.category.id!.isEmpty) {
-        emit(CategoryError('Category ID is required'));
+      if (event.category.id.isEmpty) {
+        emit(CategoryError(l10n.get('category_id_required')));
         return;
       }
 
       // Check if it's a default category
       if (event.category.isDefault) {
-        emit(CategoryError('Cannot delete default categories'));
+        emit(CategoryError(l10n.get('cannot_delete_default')));
         return;
       }
 
@@ -304,11 +303,11 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   String _mapFailureToMessage(Failure failure) {
     switch (failure.runtimeType) {
       case ServerFailure:
-        return 'Server failure';
+        return l10n.get('server_failure');
       case CacheFailure:
-        return 'Cache failure';
+        return l10n.get('cache_failure');
       default:
-        return 'Unexpected error';
+        return l10n.get('unexpected_error');
     }
   }
 }

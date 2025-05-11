@@ -1,5 +1,4 @@
 import 'package:expense_tracker/features/auth/data/models/api/auth_response_model.dart';
-import 'package:expense_tracker/features/auth/data/models/api/forgot_password_response_model.dart';
 import 'package:expense_tracker/features/auth/data/models/api/sign_in_request_model.dart';
 import 'package:expense_tracker/features/auth/data/models/api/sign_up_request_model.dart';
 import 'package:expense_tracker/features/auth/domain/entities/user.dart';
