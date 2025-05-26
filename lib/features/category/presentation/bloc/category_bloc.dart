@@ -1,8 +1,9 @@
+import 'dart:async';
+import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/core/error/failures.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_event.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_state.dart';
-import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:expense_tracker/features/category/domain/usecases/get_categories.dart'
     as get_categories;
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart'
@@ -16,8 +17,11 @@ import 'package:expense_tracker/features/category/domain/usecases/delete_categor
 import 'package:expense_tracker/features/category/domain/usecases/get_categories_by_type.dart'
     as get_categories_by_type;
 import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
-import 'package:expense_tracker/features/category/domain/repositories/category_repository.dart';
-import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:expense_tracker/features/category/domain/usecases/sync_categories.dart'
+    as sync_categories;
+import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_category.dart'
+    as get_transactions_by_category;
+import 'package:expense_tracker/core/services/notification/notification_service.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final get_categories.GetCategories getCategories;
@@ -26,25 +30,33 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final update_category.UpdateCategory updateCategory;
   final delete_category.DeleteCategory deleteCategory;
   final get_categories_by_type.GetCategoriesByType getCategoriesByType;
-  final CategoryRepository repository;
-  final AppLocalizations l10n;
+  final sync_categories.SyncCategories syncCategories;
+  final get_transactions_by_category.GetTransactionsByCategory
+      getTransactionsByCategory;
+  final String userId;
+  final NotificationService _notificationService;
 
   CategoryBloc({
     required this.getCategories,
     required this.getCategory,
+    required this.getTransactionsByCategory,
+    required this.getCategoriesByType,
     required this.addCategory,
     required this.updateCategory,
     required this.deleteCategory,
-    required this.getCategoriesByType,
-    required this.repository,
-    required this.l10n,
-  }) : super(CategoryInitial()) {
+    required this.syncCategories,
+    required this.userId,
+    required NotificationService notificationService,
+  })  : _notificationService = notificationService,
+        super(CategoryInitial()) {
     on<GetCategories>(_onGetCategories);
     on<GetCategory>(_onGetCategory);
     on<AddCategory>(_onAddCategory);
     on<UpdateCategory>(_onUpdateCategory);
     on<DeleteCategory>(_onDeleteCategory);
     on<GetCategoriesByType>(_onGetCategoriesByType);
+    on<SyncCategories>(_onSyncCategories);
+    on<ClearCategories>(_onClearCategories);
   }
 
   Future<void> _onGetCategories(
@@ -52,79 +64,13 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      print('🔄 Getting categories...');
-      final result = await getCategories(NoParams());
+      emit(const CategoryLoading());
+      final result = await getCategories(UserParams(userId: userId));
       await result.fold(
-        (failure) async {
-          print('❌ Error getting categories: ${failure.message}');
-          emit(CategoryError(_mapFailureToMessage(failure)));
-        },
-        (categories) async {
-          print('📦 Got ${categories.length} categories from local storage');
-          emit(CategoryLoaded(categories));
-
-          // If we have internet, fetch remote data and update
-          print('🌐 Fetching remote categories...');
-          final remoteResult = await repository.getRemoteCategories();
-          await remoteResult.fold(
-            (failure) async {
-              print('❌ Error getting remote categories: ${failure.message}');
-              return null;
-            },
-            (remoteCategories) async {
-              print('📦 Got ${remoteCategories.length} categories from remote');
-              // Create a map of existing categories by name and ID for quick lookup
-              final existingCategoriesByName = {
-                for (var category in categories) category.name: category
-              };
-              final existingCategoriesById = {
-                for (var category in categories) category.id: category
-              };
-
-              // Only add new categories that don't exist locally
-              for (var remote in remoteCategories) {
-                final existingByName = existingCategoriesByName[remote.name];
-                final existingById = existingCategoriesById[remote.id];
-
-                if (existingByName == null && existingById == null) {
-                  print('➕ Adding new category: ${remote.name}');
-                  categories.add(remote);
-                  await repository.cacheCategory(remote);
-                } else if (existingById != null && existingByName == null) {
-                  print(
-                      '🔄 Updating category name: ${existingById.name} -> ${remote.name}');
-                  final updatedCategory =
-                      existingById.copyWith(name: remote.name);
-                  await repository.updateCategory(updatedCategory);
-                  final index = categories.indexOf(existingById);
-                  if (index != -1) {
-                    categories[index] = updatedCategory;
-                  }
-                }
-              }
-
-              // Remove any duplicates
-              final updatedCategories =
-                  categories.fold<List<Category>>([], (unique, category) {
-                final exists = unique
-                    .any((c) => c.name == category.name || c.id == category.id);
-                if (!exists) {
-                  unique.add(category);
-                }
-                return unique;
-              });
-
-              print('📦 Final category count: ${updatedCategories.length}');
-              // Emit updated state
-              if (!emit.isDone) {
-                emit(CategoryLoaded(updatedCategories));
-              }
-            },
-          );
-        },
+        (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
+        (categories) async => emit(CategoryLoaded(categories)),
       );
     } catch (e) {
-      print('❌ Error in _onGetCategories: $e');
       emit(CategoryError(e.toString()));
     }
   }
@@ -133,16 +79,17 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     GetCategory event,
     Emitter<CategoryState> emit,
   ) async {
-    emit(CategoryLoading());
     try {
-      final result = await getCategory(get_category.Params(id: event.id));
+      emit(CategoryLoading());
+      final result =
+          await getCategory(get_category.Params(id: event.id, userId: userId));
       await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (category) async {
           if (category != null) {
             emit(CategoryLoaded([category]));
           } else {
-            emit(CategoryError('Category not found'));
+            emit(CategoryError("Category not found"));
           }
         },
       );
@@ -155,47 +102,24 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     AddCategory event,
     Emitter<CategoryState> emit,
   ) async {
-    emit(CategoryLoading());
     try {
-      print('📝 Adding category: ${event.category.name}');
-      final result =
-          await addCategory(add_category.Params(category: event.category));
+      emit(const CategoryLoading());
+      final result = await addCategory(
+          add_category.Params(category: event.category, userId: userId));
       await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
-        (_) async {
-          print('✅ Category added successfully');
-
-          // Get the latest categories list
-          final categoriesResult = await getCategories(NoParams());
+        (category) async {
+          await _checkBudgetAlerts(category);
+          final categoriesResult =
+              await getCategories(UserParams(userId: userId));
           await categoriesResult.fold(
             (failure) async =>
                 emit(CategoryError(_mapFailureToMessage(failure))),
-            (categories) async {
-              // Create a map of categories by name and type for quick lookup
-              final categoryMap = <String, Category>{};
-              for (var category in categories) {
-                final key = '${category.name}_${category.type}';
-                // If we find a category with the same name and type, prefer the one with remote ID
-                if (!categoryMap.containsKey(key) ||
-                    category.id.startsWith('681')) {
-                  categoryMap[key] = category;
-                }
-              }
-
-              // Convert map back to list
-              final updatedCategories = categoryMap.values.toList();
-
-              print('📦 Updated category list:');
-              updatedCategories
-                  .forEach((cat) => print('   - ${cat.name} (${cat.id})'));
-
-              emit(CategoryLoaded(updatedCategories));
-            },
+            (categories) async => emit(CategoryLoaded(categories)),
           );
         },
       );
     } catch (e) {
-      print('❌ Error adding category: $e');
       emit(CategoryError(e.toString()));
     }
   }
@@ -206,39 +130,23 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   ) async {
     try {
       if (event.category.id.isEmpty) {
-        emit(CategoryError(l10n.get('category_id_required')));
+        emit(CategoryError("Category id required"));
         return;
       }
 
-      final categoryResult =
-          await getCategory(get_category.Params(id: event.category.id));
-      await categoryResult.fold(
+      emit(const CategoryLoading());
+      final result = await updateCategory(
+          update_category.Params(category: event.category));
+      await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (category) async {
-          if (category == null) {
-            emit(CategoryError(l10n.get('category_not_found')));
-            return;
-          }
-
-          if (category.isDefault) {
-            emit(CategoryError(l10n.get('cannot_update_default')));
-            return;
-          }
-
-          emit(CategoryLoading());
-          final result = await updateCategory(
-              update_category.Params(category: event.category));
-          await result.fold(
+          // Get updated categories list
+          final categoriesResult =
+              await getCategories(UserParams(userId: userId));
+          await categoriesResult.fold(
             (failure) async =>
                 emit(CategoryError(_mapFailureToMessage(failure))),
-            (_) async {
-              final categoriesResult = await getCategories(NoParams());
-              await categoriesResult.fold(
-                (failure) async =>
-                    emit(CategoryError(_mapFailureToMessage(failure))),
-                (categories) async => emit(CategoryLoaded(categories)),
-              );
-            },
+            (categories) async => emit(CategoryLoaded(categories)),
           );
         },
       );
@@ -252,34 +160,72 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      if (event.category.id.isEmpty) {
-        emit(CategoryError(l10n.get('category_id_required')));
-        return;
-      }
+      // Get current categories before checking transactions
+      final currentState = state;
+      final currentCategories =
+          currentState is CategoryLoaded ? currentState.categories : null;
+      print('📋 Current categories count: ${currentCategories?.length ?? 0}');
 
-      // Check if it's a default category
-      if (event.category.isDefault) {
-        emit(CategoryError(l10n.get('cannot_delete_default')));
-        return;
-      }
+      // Check if category has transactions
+      print('🔍 Checking for transactions in category: ${event.category.id}');
+      final transactionsResult = await getTransactionsByCategory(
+        get_transactions_by_category.CategoryParams(
+          categoryId: event.category.id,
+          userId: userId,
+        ),
+      );
 
-      emit(CategoryLoading());
-      final result = await deleteCategory(
-          delete_category.Params(category: event.category));
-      await result.fold(
-        (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
-        (_) async {
-          // Get updated categories list
-          final categoriesResult = await getCategories(NoParams());
-          await categoriesResult.fold(
-            (failure) async =>
-                emit(CategoryError(_mapFailureToMessage(failure))),
-            (categories) async => emit(CategoryLoaded(categories)),
+      await transactionsResult.fold(
+        (failure) async {
+          print('❌ Error checking transactions: ${failure.message}');
+          emit(CategoryError(_mapFailureToMessage(failure),
+              previousCategories: currentCategories));
+        },
+        (transactions) async {
+          print('📊 Found ${transactions.length} transactions in category');
+          if (transactions.isNotEmpty) {
+            print('⚠️ Category has transactions, cannot delete');
+            emit(CategoryError("Category has transactions, cannot delete",
+                previousCategories: currentCategories));
+            return;
+          }
+
+          print('✅ No transactions found, proceeding with deletion');
+          emit(const CategoryLoading());
+          final result = await deleteCategory(
+              delete_category.Params(category: event.category, userId: userId));
+          await result.fold(
+            (failure) async {
+              print('❌ Error deleting category: ${failure.message}');
+              emit(CategoryError(_mapFailureToMessage(failure),
+                  previousCategories: currentCategories));
+            },
+            (_) async {
+              print('✅ Category deleted successfully, refreshing list');
+              // Get updated categories list
+              final categoriesResult =
+                  await getCategories(UserParams(userId: userId));
+              await categoriesResult.fold(
+                (failure) async {
+                  print('❌ Error refreshing categories: ${failure.message}');
+                  emit(CategoryError(_mapFailureToMessage(failure),
+                      previousCategories: currentCategories));
+                },
+                (categories) async {
+                  print('✅ Categories refreshed successfully');
+                  emit(CategoryLoaded(categories));
+                },
+              );
+            },
           );
         },
       );
     } catch (e) {
-      emit(CategoryError(e.toString()));
+      print('❌ Unexpected error during category deletion: $e');
+      final currentState = state;
+      final currentCategories =
+          currentState is CategoryLoaded ? currentState.categories : null;
+      emit(CategoryError(e.toString(), previousCategories: currentCategories));
     }
   }
 
@@ -287,10 +233,10 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     GetCategoriesByType event,
     Emitter<CategoryState> emit,
   ) async {
-    emit(CategoryLoading());
     try {
+      emit(CategoryLoading());
       final result = await getCategoriesByType(
-          get_categories_by_type.Params(type: event.type));
+          get_categories_by_type.Params(type: event.type, userId: userId));
       await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (categories) async => emit(CategoryLoaded(categories)),
@@ -300,14 +246,82 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     }
   }
 
+  Future<void> _onSyncCategories(
+    SyncCategories event,
+    Emitter<CategoryState> emit,
+  ) async {
+    try {
+      // Keep current categories in case of error
+      final currentState = state;
+      final currentCategories =
+          currentState is CategoryLoaded ? currentState.categories : null;
+
+      emit(const CategoryLoading());
+      final result = await syncCategories(NoParams());
+      await result.fold(
+        (failure) async {
+          print('❌ Sync failed: ${failure.message}');
+          emit(CategoryError(_mapFailureToMessage(failure),
+              previousCategories: currentCategories));
+        },
+        (_) async {
+          print('✅ Sync completed, refreshing categories');
+          // Get updated categories list
+          final categoriesResult =
+              await getCategories(UserParams(userId: userId));
+          await categoriesResult.fold(
+            (failure) async {
+              print('❌ Failed to get updated categories: ${failure.message}');
+              emit(CategoryError(_mapFailureToMessage(failure),
+                  previousCategories: currentCategories));
+            },
+            (categories) async {
+              print('✅ Got ${categories.length} updated categories');
+              // Filter out any deleted categories
+              final activeCategories =
+                  categories.where((cat) => !cat.isDeleted).toList();
+              print('✅ Found ${activeCategories.length} active categories');
+
+              // Update the state with the new categories
+              if (activeCategories.isEmpty) {
+                print('ℹ️ No active categories found after sync');
+                emit(const CategoryLoaded([]));
+              } else {
+                print(
+                    '📋 Emitting updated category list with ${activeCategories.length} categories');
+                activeCategories
+                    .forEach((cat) => print('   - ${cat.name} (${cat.id})'));
+                emit(CategoryLoaded(activeCategories));
+              }
+            },
+          );
+        },
+      );
+    } catch (e) {
+      print('❌ Error during sync: $e');
+      final currentState = state;
+      final currentCategories =
+          currentState is CategoryLoaded ? currentState.categories : null;
+      emit(CategoryError(e.toString(), previousCategories: currentCategories));
+    }
+  }
+
+  void _onClearCategories(ClearCategories event, Emitter<CategoryState> emit) {
+    emit(CategoryInitial());
+  }
+
+  Future<void> _checkBudgetAlerts(Category category) async {
+    await _notificationService.scheduleBudgetNotification(category);
+  }
+
   String _mapFailureToMessage(Failure failure) {
     switch (failure.runtimeType) {
       case ServerFailure:
-        return l10n.get('server_failure');
+        return "Server failure";
       case CacheFailure:
-        return l10n.get('cache_failure');
+        return "Cache failure";
       default:
-        return l10n.get('unexpected_error');
+        return "Unexpected error";
     }
   }
 }

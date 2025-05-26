@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:equatable/equatable.dart';
+import 'package:expense_tracker/features/auth/domain/entities/user.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -99,18 +100,16 @@ class ChangePasswordEvent extends AuthEvent {
 class UpdateProfileEvent extends AuthEvent {
   final String firstName;
   final String lastName;
-  final String email;
   final File? profilePicture;
 
   const UpdateProfileEvent({
     required this.firstName,
     required this.lastName,
-    required this.email,
     this.profilePicture,
   });
 
   @override
-  List<Object?> get props => [firstName, lastName, email, profilePicture];
+  List<Object?> get props => [firstName, lastName, profilePicture];
 }
 
 class UpdateLanguageEvent extends AuthEvent {
@@ -120,4 +119,33 @@ class UpdateLanguageEvent extends AuthEvent {
 
   @override
   List<Object?> get props => [language];
+}
+
+class AuthenticateWithBiometricsEvent extends AuthEvent {
+  final User user;
+  final String? token;
+
+  const AuthenticateWithBiometricsEvent({required this.user, this.token});
+
+  @override
+  List<Object?> get props => [user, token];
+}
+
+class VerifyOtpEvent extends AuthEvent {
+  final String otp;
+  final String email;
+
+  const VerifyOtpEvent({required this.otp, required this.email});
+
+  @override
+  List<Object?> get props => [otp, email];
+}
+
+class ResendVerificationCodeEvent extends AuthEvent {
+  final String email;
+
+  const ResendVerificationCodeEvent({required this.email});
+
+  @override
+  List<Object?> get props => [email];
 }

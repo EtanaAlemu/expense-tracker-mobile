@@ -6,11 +6,8 @@ import 'package:expense_tracker/core/theme/app_icons.dart';
 class CategoryMapper {
   Category toEntity(dynamic model) {
     if (model is HiveCategoryModel) {
-      print('🔍 Parsing Hive model: ${model.icon}');
       final iconName = model.icon;
-      print('🎯 Icon name from Hive: $iconName');
       final parsedIcon = _parseIcon(iconName);
-      print('🎨 Parsed icon: $parsedIcon');
 
       return Category(
         id: model.id ?? '',
@@ -24,40 +21,58 @@ class CategoryMapper {
         updatedAt: model.updatedAt ?? DateTime.now(),
         userId: model.userId,
         isDefault: model.isDefault,
-        isSynced: false,
+        isSynced: model.isSynced,
+        isUpdated: model.isUpdated,
+        isDeleted: model.isDeleted,
+        transactionType: model.transactionType,
+        frequency: model.frequency,
+        defaultAmount: model.defaultAmount,
+        isActive: model.isActive ?? true,
+        isRecurring: model.isRecurring ?? false,
+        lastProcessedDate: model.lastProcessedDate,
+        nextProcessedDate: model.nextProcessedDate,
       );
-    } else {
-      // Handle API response
-      print('🔍 Parsing API response: $model');
+    } else if (model is Map<String, dynamic>) {
       final iconName = model['icon'] as String?;
-      print('🎯 Icon name from API: $iconName');
       final parsedIcon = _parseIcon(iconName);
-      print('🎨 Parsed icon: $parsedIcon');
 
       return Category(
-        id: model['_id'] ?? '',
+        id: model['_id']?.toString() ?? '',
         name: model['name'] ?? '',
-        type: model['type'] ?? 'Expense',
+        type: model['type'] ?? '',
         color: _parseColor(model['color']),
         icon: parsedIcon,
-        budget: model['budget'] != null
-            ? double.parse(model['budget'].toString())
-            : null,
+        budget: model['budget']?.toDouble(),
         description: model['description'],
-        createdAt: DateTime.parse(
-            model['createdAt'] ?? DateTime.now().toIso8601String()),
-        updatedAt: DateTime.parse(
-            model['updatedAt'] ?? DateTime.now().toIso8601String()),
-        userId: model['userId'] ?? '',
+        createdAt: model['createdAt'] != null
+            ? DateTime.parse(model['createdAt'])
+            : DateTime.now(),
+        updatedAt: model['updatedAt'] != null
+            ? DateTime.parse(model['updatedAt'])
+            : DateTime.now(),
+        userId: model['user'] ?? '',
         isDefault: model['isDefault'] ?? false,
-        isSynced: true,
+        isSynced: true, // API responses are always synced
+        isUpdated: false, // API responses are never updated
+        isDeleted: false, // API responses are never deleted
+        transactionType: model['transactionType'] ?? '',
+        frequency: model['frequency'],
+        defaultAmount: model['defaultAmount']?.toDouble(),
+        isActive: model['isActive'] ?? true,
+        isRecurring: model['isRecurring'] ?? false,
+        lastProcessedDate: model['lastProcessedDate'] != null
+            ? DateTime.parse(model['lastProcessedDate'])
+            : null,
+        nextProcessedDate: model['nextProcessedDate'] != null
+            ? DateTime.parse(model['nextProcessedDate'])
+            : null,
       );
     }
+    throw Exception('Invalid model type');
   }
 
   HiveCategoryModel toHiveModel(Category category) {
     final iconName = _getIconName(category.icon);
-    print('💾 Saving icon name to Hive: $iconName');
 
     return HiveCategoryModel(
       id: category.id,
@@ -71,25 +86,51 @@ class CategoryMapper {
       updatedAt: category.updatedAt,
       userId: category.userId,
       isDefault: category.isDefault,
+      transactionType: category.transactionType,
+      frequency: category.frequency,
+      defaultAmount: category.defaultAmount,
+      isActive: category.isActive,
+      isRecurring: category.isRecurring,
+      lastProcessedDate: category.lastProcessedDate,
+      nextProcessedDate: category.nextProcessedDate,
+      isSynced: category.isSynced,
+      isUpdated: category.isUpdated,
+      isDeleted: category.isDeleted,
     );
   }
 
   Map<String, dynamic> toApiModel(Category category) {
-    return {
+    debugPrint('📤 Converting category to API model: ${category.name}');
+    final model = {
       'name': category.name,
       'description': category.description,
       'icon': _getIconName(category.icon),
       'color': '#${category.color.value.toRadixString(16).substring(2)}',
       'type': category.type,
       'budget': category.budget,
-      'userId': category.userId,
+      'user': category.userId,
       'isDefault': category.isDefault,
+      'transactionType': category.transactionType,
+      'frequency': category.frequency,
+      'defaultAmount': category.defaultAmount,
+      'isActive': category.isActive,
+      'isRecurring': category.isRecurring,
+      'lastProcessedDate': category.lastProcessedDate?.toIso8601String(),
+      'nextProcessedDate': category.nextProcessedDate?.toIso8601String(),
+      'isUpdated': category.isUpdated,
+      'isDeleted': category.isDeleted,
     };
+
+    // Only include _id if it's not empty
+    if (category.id.isNotEmpty) {
+      model['_id'] = category.id;
+    }
+
+    debugPrint('📤 API model: $model');
+    return model;
   }
 
   String _getIconName(IconData icon) {
-    print('🔍 CategoryMapper._getIconName: Looking for name of icon: $icon');
-
     // Map of IconData to icon names based on AppIcons class
     final iconMap = {
       // Finance Icons
@@ -152,10 +193,8 @@ class CategoryMapper {
 
     final iconName = iconMap[icon];
     if (iconName == null) {
-      print('⚠️ CategoryMapper._getIconName: No name found for icon: $icon');
       return 'category';
     }
-    print('✅ CategoryMapper._getIconName: Found name: $iconName');
     return iconName;
   }
 
@@ -170,17 +209,13 @@ class CategoryMapper {
 
   IconData _parseIcon(String? iconName) {
     if (iconName == null) {
-      print('⚠️ Icon name is null, using default icon');
       return Icons.category;
     }
 
-    print('🔍 Looking up icon for name: $iconName');
     final icon = AppIcons.getIconByName(iconName);
     if (icon == null) {
-      print('⚠️ No icon found for name: $iconName, using default icon');
       return Icons.category;
     }
-    print('✅ Found icon: $icon');
     return icon;
   }
 
@@ -195,6 +230,8 @@ class CategoryMapper {
       'isDefault': category.isDefault,
       'createdAt': category.createdAt.toIso8601String(),
       'updatedAt': category.updatedAt.toIso8601String(),
+      'isUpdated': category.isUpdated,
+      'isDeleted': category.isDeleted,
     };
   }
 }

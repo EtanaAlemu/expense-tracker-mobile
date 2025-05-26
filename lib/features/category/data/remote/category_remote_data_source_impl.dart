@@ -3,31 +3,46 @@ import 'package:expense_tracker/core/constants/api_constants.dart';
 import 'package:expense_tracker/features/category/data/mappers/category_mapper.dart';
 import 'package:expense_tracker/features/category/data/remote/category_remote_data_source.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
-import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:flutter/material.dart' show debugPrint;
 
 class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   final ApiService _apiService;
   final CategoryMapper _mapper;
-  final AppLocalizations _l10n;
 
   CategoryRemoteDataSourceImpl({
     required ApiService apiService,
     required CategoryMapper mapper,
-    required AppLocalizations l10n,
   })  : _apiService = apiService,
-        _mapper = mapper,
-        _l10n = l10n;
+        _mapper = mapper;
 
   @override
   Future<Category> addCategory(Category category) async {
+    debugPrint('📤 Sending category to server: ${category.name}');
     final response = await _apiService.dio.post(
       ApiConstants.categories,
       data: _mapper.toApiModel(category),
     );
+    debugPrint('📥 Server response: ${response.data}');
+
     if (response.statusCode != 201) {
-      throw Exception(_l10n.get('failed_to_save_category'));
+      debugPrint('❌ Server error: ${response.statusCode} - ${response.data}');
+      throw Exception('Failed to save category');
     }
-    return _mapper.toEntity(response.data);
+
+    final responseData = response.data;
+    if (responseData == null || responseData['success'] != true) {
+      debugPrint('❌ Invalid server response: success is false or missing');
+      throw Exception('Invalid server response: operation failed');
+    }
+
+    final categoryData = responseData['data'];
+    if (categoryData == null || categoryData['_id'] == null) {
+      debugPrint('❌ Invalid server response: missing category data or _id');
+      throw Exception('Invalid server response: missing category ID');
+    }
+
+    debugPrint('✅ Category created with ID: ${categoryData['_id']}');
+    return _mapper.toEntity(categoryData);
   }
 
   @override
@@ -35,7 +50,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
     final response =
         await _apiService.dio.get('${ApiConstants.categories}/$id');
     if (response.statusCode != 200) {
-      throw Exception(_l10n.get('failed_to_get_category'));
+      throw Exception('Failed to get category');
     }
     return _mapper.toEntity(response.data);
   }
@@ -44,11 +59,9 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   Future<List<Category>> getCategories() async {
     final response = await _apiService.dio.get(ApiConstants.categories);
     if (response.statusCode != 200) {
-      throw Exception(_l10n.get('failed_to_get_categories'));
+      throw Exception('Failed to get categories');
     }
-    print('API Response for categories: ${response.data}');
     return (response.data as List).map((json) {
-      print('Mapping category: $json');
       return _mapper.toEntity(json);
     }).toList();
   }
@@ -60,19 +73,19 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       data: _mapper.toApiModel(category),
     );
     if (response.statusCode != 200) {
-      throw Exception(_l10n.get('failed_to_update_category'));
+      throw Exception('Failed to update category');
     }
   }
 
   @override
   Future<void> deleteCategory(String id) async {
     if (id.isEmpty) {
-      throw Exception(_l10n.get('category_id_required'));
+      throw Exception('Category id required');
     }
     final response =
         await _apiService.dio.delete('${ApiConstants.categories}/$id');
     if (response.statusCode != 200) {
-      throw Exception(_l10n.get('failed_to_delete_category'));
+      throw Exception('Failed to delete category');
     }
   }
 
@@ -86,7 +99,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       final List<dynamic> data = response.data;
       return data.map((json) => _mapper.toEntity(json)).toList();
     } catch (e) {
-      throw Exception('${_l10n.get('failed_to_get_categories_by_type')}: $e');
+      throw Exception('Failed to get categories by type: $e');
     }
   }
 }

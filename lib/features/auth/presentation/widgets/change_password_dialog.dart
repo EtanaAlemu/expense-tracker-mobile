@@ -17,6 +17,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _currentPasswordFocus = FocusNode();
+  final _newPasswordFocus = FocusNode();
+  final _confirmPasswordFocus = FocusNode();
 
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
@@ -27,7 +30,21 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _currentPasswordFocus.dispose();
+    _newPasswordFocus.dispose();
+    _confirmPasswordFocus.dispose();
     super.dispose();
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      context.read<AuthBloc>().add(
+            ChangePasswordEvent(
+              currentPassword: _currentPasswordController.text,
+              newPassword: _newPasswordController.text,
+            ),
+          );
+    }
   }
 
   @override
@@ -108,6 +125,12 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   // Current Password
                   TextFormField(
                     controller: _currentPasswordController,
+                    focusNode: _currentPasswordFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) {
+                      _currentPasswordFocus.unfocus();
+                      FocusScope.of(context).requestFocus(_newPasswordFocus);
+                    },
                     obscureText: _obscureCurrentPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
@@ -141,6 +164,13 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   // New Password
                   TextFormField(
                     controller: _newPasswordController,
+                    focusNode: _newPasswordFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) {
+                      _newPasswordFocus.unfocus();
+                      FocusScope.of(context)
+                          .requestFocus(_confirmPasswordFocus);
+                    },
                     obscureText: _obscureNewPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
@@ -176,6 +206,12 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   // Confirm New Password
                   TextFormField(
                     controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocus,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) {
+                      _confirmPasswordFocus.unfocus();
+                      _submitForm();
+                    },
                     obscureText: _obscureConfirmPassword,
                     enabled: !isLoading,
                     decoration: InputDecoration(
@@ -229,15 +265,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               onPressed: state.isLoading
                   ? null
                   : () {
-                      if (_formKey.currentState!.validate()) {
-                        context.read<AuthBloc>().add(
-                              ChangePasswordEvent(
-                                currentPassword:
-                                    _currentPasswordController.text,
-                                newPassword: _newPasswordController.text,
-                              ),
-                            );
-                      }
+                      _submitForm();
                     },
               child: state.isLoading
                   ? const SizedBox(

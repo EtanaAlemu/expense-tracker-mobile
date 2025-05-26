@@ -102,39 +102,44 @@ class _SignInFormState extends State<SignInForm> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.get('forgot_password_message'),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        labelText: l10n.get('email'),
-                        hintText: l10n.get('enter_email'),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.get('forgot_password_message'),
+                        style: theme.textTheme.bodyMedium,
                       ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return l10n.get('email_required');
-                        }
-                        final emailRegex =
-                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                        if (!emailRegex.hasMatch(value)) {
-                          return l10n.get('invalid_email');
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          labelText: l10n.get('email'),
+                          hintText: l10n.get('enter_email'),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return l10n.get('email_required');
+                          }
+                          final emailRegex =
+                              RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                          if (!emailRegex.hasMatch(value)) {
+                            return l10n.get('invalid_email');
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -154,12 +159,18 @@ class _SignInFormState extends State<SignInForm> {
                                 );
                           }
                         },
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
                   child: state.isLoading
                       ? const SizedBox(
                           height: 16,
                           width: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : Text(l10n.get('send_reset_link')),
@@ -179,26 +190,19 @@ class _SignInFormState extends State<SignInForm> {
 
     try {
       if (Platform.isIOS) {
-        // Use iOS-specific URI
         final uri = Uri.parse('message://');
-        debugPrint('Using iOS message:// scheme');
-
         if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          debugPrint('iOS Mail app launched');
+          await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
         } else {
-          debugPrint('Could not launch iOS Mail app');
           if (mounted) _showManualInstructions(context);
         }
       } else if (Platform.isAndroid) {
-        // Launch the Gmail app specifically
         final intent = AndroidIntent(
           action: 'android.intent.action.MAIN',
           category: 'android.intent.category.APP_EMAIL',
+          flags: [0x10000000],
         );
-
         await intent.launch();
-        debugPrint('Email app (Inbox) launched on Android');
       } else {
         debugPrint('Unsupported platform');
       }
@@ -210,6 +214,7 @@ class _SignInFormState extends State<SignInForm> {
 
   // Show manual instructions as fallback
   void _showManualInstructions(BuildContext context) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content:
@@ -274,8 +279,12 @@ class _SignInFormState extends State<SignInForm> {
           previous.isLoading != current.isLoading ||
           previous.isAuthenticated != current.isAuthenticated,
       listener: (context, state) {
+        if (!mounted) return;
+
         if (state.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
+          scaffoldMessenger.clearSnackBars();
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(state.error!),
               backgroundColor: Colors.red,
@@ -286,10 +295,12 @@ class _SignInFormState extends State<SignInForm> {
                 borderRadius: BorderRadius.circular(10),
               ),
               action: SnackBarAction(
-                label: 'Dismiss',
+                label: l10n.get('dismiss'),
                 textColor: Colors.white,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  if (mounted) {
+                    scaffoldMessenger.hideCurrentSnackBar();
+                  }
                 },
               ),
             ),
@@ -307,11 +318,12 @@ class _SignInFormState extends State<SignInForm> {
       buildWhen: (previous, current) => previous.isLoading != current.isLoading,
       builder: (context, state) {
         return Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Email field
@@ -330,6 +342,8 @@ class _SignInFormState extends State<SignInForm> {
                           TextStyle(color: theme.textTheme.bodyLarge?.color),
                       hintStyle:
                           TextStyle(color: theme.textTheme.bodySmall?.color),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                     ),
                     style: theme.textTheme.bodyLarge,
                     keyboardType: TextInputType.emailAddress,
@@ -340,7 +354,7 @@ class _SignInFormState extends State<SignInForm> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Password field
                   TextFormField(
@@ -366,6 +380,8 @@ class _SignInFormState extends State<SignInForm> {
                           TextStyle(color: theme.textTheme.bodyLarge?.color),
                       hintStyle:
                           TextStyle(color: theme.textTheme.bodySmall?.color),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -388,7 +404,7 @@ class _SignInFormState extends State<SignInForm> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Remember me checkbox
                   Row(
@@ -400,6 +416,7 @@ class _SignInFormState extends State<SignInForm> {
                             _rememberMe = value ?? false;
                           });
                         },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       Text(
                         l10n.get('remember_me'),
@@ -425,7 +442,7 @@ class _SignInFormState extends State<SignInForm> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
 
                   // Sign in button
                   SizedBox(
@@ -444,12 +461,7 @@ class _SignInFormState extends State<SignInForm> {
                                     );
                               }
                             },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      
                       child: state.isLoading
                           ? const CircularProgressIndicator()
                           : Text(l10n.get('sign_in')),

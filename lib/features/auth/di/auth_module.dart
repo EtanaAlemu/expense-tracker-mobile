@@ -1,4 +1,7 @@
+import 'package:expense_tracker/features/auth/domain/services/biometric_service.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/resend_verification_code_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/validate_token_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:injectable/injectable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:expense_tracker/core/network/network_info.dart';
@@ -27,6 +30,7 @@ import 'package:expense_tracker/features/auth/domain/usecases/check_auth_status_
 import 'package:expense_tracker/features/auth/domain/usecases/validate_token_on_start_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/clear_remember_me_usecase.dart';
 import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
 
 @module
 abstract class AuthModule {
@@ -121,6 +125,15 @@ abstract class AuthModule {
       ValidateTokenOnStartUseCase(repository);
 
   @lazySingleton
+  VerifyOtpUseCase verifyOtpUseCase(AuthRepository repository) =>
+      VerifyOtpUseCase(repository);
+
+  @lazySingleton
+  ResendVerificationCodeUseCase resendVerificationCodeUseCase(
+          AuthRepository repository) =>
+      ResendVerificationCodeUseCase(repository);
+
+  @lazySingleton
   CheckAuthStatusUseCase checkAuthStatusUseCase(
     AuthRepository repository,
     CheckRememberMeUseCase checkRememberMeUseCase,
@@ -152,6 +165,9 @@ abstract class AuthModule {
     CheckAuthStatusUseCase checkAuthStatusUseCase,
     ClearRememberMeUseCase clearRememberMeUseCase,
     AppLocalizations l10n,
+    BiometricService biometricService,
+    VerifyOtpUseCase verifyOtpUseCase,
+    ResendVerificationCodeUseCase resendVerificationCodeUseCase,
   ) =>
       AuthBloc(
         signInUseCase: signInUseCase,
@@ -168,5 +184,17 @@ abstract class AuthModule {
         checkAuthStatusUseCase: checkAuthStatusUseCase,
         clearRememberMeUseCase: clearRememberMeUseCase,
         l10n: l10n,
+        biometricService: biometricService,
+        verifyOtpUseCase: verifyOtpUseCase,
+        resendVerificationCodeUseCase: resendVerificationCodeUseCase,
       );
+
+  @singleton
+  String provideUserId(AuthBloc authBloc) {
+    final state = authBloc.state;
+    if (state is AuthAuthenticated && state.user != null) {
+      return state.user!.id;
+    }
+    return '';
+  }
 }

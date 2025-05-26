@@ -8,3 +8,10 @@ abstract class BaseUseCase<Type, Params> {
 class NoParams {
   const NoParams();
 }
+
+class UserParams {
+  final String userId;
+  const UserParams({
+    required this.userId,
+  });
+}

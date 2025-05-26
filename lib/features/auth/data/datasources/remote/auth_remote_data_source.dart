@@ -11,4 +11,6 @@ abstract class AuthRemoteDataSource {
   Future<void> changePassword(String oldPassword, String newPassword);
   Future<String> forgotPassword(String email);
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData);
+  Future<void> verifyOtp(String otp, String email);
+  Future<String> resendVerificationCode(String email);
 }

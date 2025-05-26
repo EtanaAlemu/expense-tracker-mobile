@@ -126,8 +126,11 @@ class AuthError extends AuthState {
 }
 
 class AuthSuccess extends AuthState {
+  final User? user;
+
   const AuthSuccess({
     required String message,
+    this.user,
   }) : super(successMessage: message);
 
   @override
@@ -140,7 +143,105 @@ class AuthSuccess extends AuthState {
   }) {
     return AuthSuccess(
       message: successMessage ?? this.successMessage!,
+      user: user ?? this.user,
     );
+  }
+}
+
+class AuthBiometricRequired extends AuthState {
+  final User user;
+  final String? token;
+
+  const AuthBiometricRequired({
+    required this.user,
+    this.token,
+  }) : super(user: user, token: token);
+
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return AuthBiometricRequired(
+      user: user ?? this.user,
+      token: token ?? this.token,
+    );
+  }
+}
+
+class OtpVerificationLoading extends AuthState {
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return OtpVerificationLoading();
+  }
+}
+
+class OtpVerificationSuccess extends AuthState {
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return OtpVerificationSuccess();
+  }
+}
+
+class OtpVerificationFailure extends AuthState {
+  final String message;
+  const OtpVerificationFailure(this.message);
+
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return OtpVerificationFailure(error ?? message);
+  }
+}
+
+class ResendCodeSuccess extends AuthState {
+  const ResendCodeSuccess();
+
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return ResendCodeSuccess();
+  }
+}
+
+class ResendCodeFailure extends AuthState {
+  final String message;
+  const ResendCodeFailure(this.message);
+
+  @override
+  AuthState copyWith({
+    bool? isLoading,
+    String? error,
+    User? user,
+    String? token,
+    String? successMessage,
+  }) {
+    return ResendCodeFailure(error ?? message);
   }
 }
 

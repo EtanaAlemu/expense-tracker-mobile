@@ -7,11 +7,14 @@ class TransactionMapper {
       id: transaction.id,
       userId: transaction.userId,
       amount: transaction.amount,
+      title: transaction.title,
       description: transaction.description,
       type: transaction.type,
       categoryId: transaction.categoryId,
-      date: transaction.date,
+      date: transaction.date.toUtc(),
       isSynced: transaction.isSynced,
+      isDeleted: transaction.isDeleted,
+      isUpdated: transaction.isUpdated,
     );
   }
 
@@ -21,24 +24,40 @@ class TransactionMapper {
         id: model.id,
         userId: model.userId,
         amount: model.amount,
+        title: model.title,
         description: model.description,
         type: model.type,
         categoryId: model.categoryId,
-        date: model.date,
+        date: model.date.toLocal(),
         isSynced: model.isSynced,
+        isDeleted: model.isDeleted,
+        isUpdated: model.isUpdated,
       );
     } else if (model is Map<String, dynamic>) {
+      DateTime date;
+      if (model['date'] != null) {
+        if (model['date'] is int) {
+          date = DateTime.fromMillisecondsSinceEpoch(model['date'] as int)
+              .toLocal();
+        } else {
+          date = DateTime.parse(model['date'] as String).toLocal();
+        }
+      } else {
+        date = DateTime.now();
+      }
+
       return Transaction(
         id: model['_id']?.toString() ?? '',
         userId: model['user']?.toString() ?? '',
         amount: model['amount']?.toDouble() ?? 0.0,
+        title: model['title'] ?? '',
         description: model['description'] ?? '',
         type: model['type'] ?? '',
         categoryId: model['category']?.toString() ?? '',
-        date: model['date'] != null
-            ? DateTime.parse(model['date'])
-            : DateTime.now(),
+        date: date,
         isSynced: true,
+        isDeleted: false,
+        isUpdated: false,
       );
     }
     throw Exception('Invalid model type');
@@ -52,9 +71,12 @@ class TransactionMapper {
       'type': transaction.type,
       'amount': transaction.amount,
       'categoryId': transaction.categoryId,
+      'title': transaction.title,
       'description': transaction.description,
-      'date': transaction.date,
+      'date': transaction.date.toUtc().millisecondsSinceEpoch,
       'isSynced': transaction.isSynced,
+      'isDeleted': transaction.isDeleted,
+      'isUpdated': transaction.isUpdated,
     };
   }
 
@@ -64,11 +86,14 @@ class TransactionMapper {
       'id': transaction.id,
       'user': transaction.userId,
       'amount': transaction.amount,
+      'title': transaction.title,
       'description': transaction.description,
       'type': transaction.type,
       'category': transaction.categoryId,
-      'date': transaction.date.toIso8601String(),
+      'date': transaction.date.toUtc().millisecondsSinceEpoch,
       'isSynced': transaction.isSynced,
+      'isDeleted': transaction.isDeleted,
+      'isUpdated': transaction.isUpdated,
     };
   }
 }

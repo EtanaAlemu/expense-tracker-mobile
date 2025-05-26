@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +24,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
   File? _imageFile;
   final _imagePicker = ImagePicker();
 
@@ -34,7 +34,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     if (state is AuthAuthenticated && state.user != null) {
       _firstNameController.text = state.user!.firstName;
       _lastNameController.text = state.user!.lastName;
-      _emailController.text = state.user!.email;
     }
   }
 
@@ -42,7 +41,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -68,6 +66,89 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         ),
       );
     }
+  }
+
+  Widget _buildProfileImage(
+      String? imageUrl, String firstName, String lastName, ThemeData theme) {
+    if (_imageFile != null) {
+      return ClipOval(
+        child: Image.file(
+          _imageFile!,
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('data:image')) {
+        // Handle base64 image
+        try {
+          final base64String = imageUrl.split(',')[1];
+          final bytes = base64Decode(base64String);
+          return ClipOval(
+            child: Image.memory(
+              bytes,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Text(
+                    '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        } catch (e) {
+          return Center(
+            child: Text(
+              '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }
+      } else {
+        // Handle network image
+        return ClipOval(
+          child: Image.network(
+            imageUrl,
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Text(
+                  '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      }
+    }
+    // Fallback: initials
+    return Center(
+      child: Text(
+        '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+      ),
+    );
   }
 
   @override
@@ -217,49 +298,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                               width: 2,
                             ),
                           ),
-                          child: _imageFile != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                    _imageFile!,
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : currentUser?.image != null
-                                  ? ClipOval(
-                                      child: Image.network(
-                                        currentUser!.image!,
-                                        width: 100,
-                                        height: 100,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return Center(
-                                            child: Text(
-                                              '${firstName[0]}${lastName[0]}',
-                                              style: theme
-                                                  .textTheme.headlineMedium
-                                                  ?.copyWith(
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        '${firstName[0]}${lastName[0]}',
-                                        style: theme.textTheme.headlineMedium
-                                            ?.copyWith(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
+                          child: _buildProfileImage(
+                              currentUser?.image, firstName, lastName, theme),
                         ),
                         Positioned(
                           right: 0,
@@ -316,25 +356,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Email
-                  TextFormField(
-                    controller: _emailController,
-                    enabled: !isLoading,
-                    decoration: InputDecoration(
-                      labelText: l10n.get('email'),
-                      prefixIcon: const Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return l10n.get('email_required');
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return l10n.get('invalid_email');
-                      }
-                      return null;
-                    },
-                  ),
+
                 ],
               ),
             ),
@@ -355,7 +377,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           UpdateProfileEvent(
                             firstName: _firstNameController.text,
                             lastName: _lastNameController.text,
-                            email: _emailController.text,
                             profilePicture: _imageFile,
                           ),
                         );

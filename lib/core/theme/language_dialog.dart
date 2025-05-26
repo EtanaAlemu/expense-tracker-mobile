@@ -47,19 +47,6 @@ class LanguageDialog extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
-          ListTile(
-            title: const Text('Afaan Oromoo'),
-            trailing: authState is AuthAuthenticated &&
-                    authState.user?.language == 'om'
-                ? const Icon(Icons.check, color: Colors.green)
-                : null,
-            onTap: () {
-              context.read<AuthBloc>().add(
-                    const UpdateLanguageEvent('om'),
-                  );
-              Navigator.pop(context);
-            },
-          ),
         ],
       ),
       actions: [

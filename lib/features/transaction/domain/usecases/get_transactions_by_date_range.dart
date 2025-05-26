@@ -7,10 +7,11 @@ import 'package:expense_tracker/features/transaction/domain/repositories/transac
 class DateRangeParams {
   final DateTime startDate;
   final DateTime endDate;
-
+  final String userId;
   const DateRangeParams({
     required this.startDate,
     required this.endDate,
+    required this.userId,
   });
 }
 
@@ -27,6 +28,7 @@ class GetTransactionsByDateRange
       final transactions = await repository.getTransactionsByDateRange(
         params.startDate,
         params.endDate,
+        params.userId,
       );
       return transactions.fold(
         (failure) => Left(failure),

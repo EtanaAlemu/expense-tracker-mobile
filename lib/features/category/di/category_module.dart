@@ -1,3 +1,4 @@
+import 'package:expense_tracker/features/transaction/domain/repositories/transaction_repository.dart';
 import 'package:injectable/injectable.dart';
 import 'package:expense_tracker/core/network/api_service.dart';
 import 'package:expense_tracker/core/network/network_info.dart';
@@ -13,8 +14,10 @@ import 'package:expense_tracker/features/category/domain/usecases/get_categories
 import 'package:expense_tracker/features/category/domain/usecases/get_categories_by_type.dart';
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart';
 import 'package:expense_tracker/features/category/domain/usecases/update_category.dart';
+import 'package:expense_tracker/features/category/domain/usecases/sync_categories.dart';
 import 'package:expense_tracker/features/category/presentation/bloc/category_bloc.dart';
-import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_category.dart';
+import 'package:expense_tracker/core/services/notification/notification_service.dart';
 
 @module
 abstract class CategoryModule {
@@ -29,12 +32,10 @@ abstract class CategoryModule {
   CategoryRemoteDataSource categoryRemoteDataSource(
     ApiService apiService,
     CategoryMapper mapper,
-    AppLocalizations l10n,
   ) =>
       CategoryRemoteDataSourceImpl(
         apiService: apiService,
         mapper: mapper,
-        l10n: l10n,
       );
 
   @singleton
@@ -43,14 +44,14 @@ abstract class CategoryModule {
     CategoryRemoteDataSource remoteDataSource,
     CategoryMapper mapper,
     NetworkInfo networkInfo,
-    AppLocalizations l10n,
+    TransactionRepository transactionRepository,
   ) =>
       CategoryRepositoryImpl(
         localDataSource: localDataSource,
         remoteDataSource: remoteDataSource,
         mapper: mapper,
         networkInfo: networkInfo,
-        l10n: l10n,
+        transactionRepository: transactionRepository,
       );
 
   @singleton
@@ -77,25 +78,34 @@ abstract class CategoryModule {
   GetCategoriesByType getCategoriesByType(CategoryRepository repository) =>
       GetCategoriesByType(repository);
 
-  @injectable
+  @singleton
+  SyncCategories syncCategories(CategoryRepository repository) =>
+      SyncCategories(repository);
+
+  @singleton
   CategoryBloc categoryBloc(
     GetCategories getCategories,
     GetCategory getCategory,
+    GetTransactionsByCategory getTransactionsByCategory,
+    GetCategoriesByType getCategoriesByType,
     AddCategory addCategory,
     UpdateCategory updateCategory,
     DeleteCategory deleteCategory,
-    GetCategoriesByType getCategoriesByType,
-    CategoryRepository repository,
-    AppLocalizations l10n,
-  ) =>
-      CategoryBloc(
-        getCategories: getCategories,
-        getCategory: getCategory,
-        addCategory: addCategory,
-        updateCategory: updateCategory,
-        deleteCategory: deleteCategory,
-        getCategoriesByType: getCategoriesByType,
-        repository: repository,
-        l10n: l10n,
-      );
+    SyncCategories syncCategories,
+    String userId,
+    NotificationService notificationService,
+  ) {
+    return CategoryBloc(
+      getCategories: getCategories,
+      getCategory: getCategory,
+      getTransactionsByCategory: getTransactionsByCategory,
+      getCategoriesByType: getCategoriesByType,
+      addCategory: addCategory,
+      updateCategory: updateCategory,
+      deleteCategory: deleteCategory,
+      syncCategories: syncCategories,
+      userId: userId,
+      notificationService: notificationService,
+    );
+  }
 }

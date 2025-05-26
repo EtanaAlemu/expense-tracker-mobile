@@ -4,16 +4,15 @@ import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:expense_tracker/features/category/domain/repositories/category_repository.dart';
 
-class AddCategory implements BaseUseCase<void, Params> {
+class AddCategory implements BaseUseCase<Category, Params> {
   final CategoryRepository repository;
 
   AddCategory(this.repository);
 
   @override
-  Future<Either<Failure, void>> call(Params params) async {
+  Future<Either<Failure, Category>> call(Params params) async {
     try {
-      await repository.addCategory(params.category);
-      return const Right(null);
+      return await repository.addCategory(params.category);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -22,6 +21,7 @@ class AddCategory implements BaseUseCase<void, Params> {
 
 class Params {
   final Category category;
+  final String userId;
 
-  Params({required this.category});
+  Params({required this.category, required this.userId});
 }

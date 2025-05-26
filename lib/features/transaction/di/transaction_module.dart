@@ -1,6 +1,7 @@
+import 'package:expense_tracker/features/category/domain/usecases/get_category.dart';
+import 'package:injectable/injectable.dart';
 import 'package:expense_tracker/core/network/api_service.dart';
 import 'package:expense_tracker/core/network/network_info.dart';
-import 'package:injectable/injectable.dart';
 import 'package:expense_tracker/features/transaction/data/local/transaction_local_data_source.dart';
 import 'package:expense_tracker/features/transaction/data/mappers/transaction_mapper.dart';
 import 'package:expense_tracker/features/transaction/data/remote/transaction_remote_data_source.dart';
@@ -14,7 +15,9 @@ import 'package:expense_tracker/features/transaction/domain/usecases/delete_tran
 import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_date_range.dart';
 import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_category.dart';
 import 'package:expense_tracker/features/transaction/domain/usecases/get_total_transactions_by_category.dart';
+import 'package:expense_tracker/features/transaction/domain/usecases/sync_transactions.dart';
 import 'package:expense_tracker/features/transaction/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_tracker/core/services/notification/notification_service.dart';
 
 @module
 abstract class TransactionModule {
@@ -90,16 +93,28 @@ abstract class TransactionModule {
       GetTotalTransactionsByCategory(repository);
 
   @singleton
+  SyncTransactions syncTransactions(TransactionRepository repository) =>
+      SyncTransactions(repository);
+
+  @injectable
   TransactionBloc transactionBloc(
     GetTransactions getTransactions,
     AddTransaction addTransaction,
     UpdateTransaction updateTransaction,
     DeleteTransaction deleteTransaction,
+    SyncTransactions syncTransactions,
+    String userId,
+    GetCategory getCategory,
+    NotificationService notificationService,
   ) =>
       TransactionBloc(
         getTransactions: getTransactions,
         addTransaction: addTransaction,
         updateTransaction: updateTransaction,
         deleteTransaction: deleteTransaction,
+        syncTransactions: syncTransactions,
+        userId: userId,
+        getCategory: getCategory,
+        notificationService: notificationService,
       );
 }

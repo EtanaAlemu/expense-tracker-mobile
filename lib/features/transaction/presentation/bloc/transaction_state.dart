@@ -17,3 +17,5 @@ class TransactionError extends TransactionState {
 
   TransactionError(this.message);
 }
+
+class TransactionSynced extends TransactionState {}

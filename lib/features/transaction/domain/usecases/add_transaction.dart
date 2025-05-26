@@ -4,16 +4,16 @@ import 'package:expense_tracker/features/transaction/domain/entities/transaction
 import 'package:expense_tracker/features/transaction/domain/repositories/transaction_repository.dart';
 import 'package:dartz/dartz.dart';
 
-class AddTransaction implements BaseUseCase<void, Transaction> {
+class AddTransaction implements BaseUseCase<Transaction, Transaction> {
   final TransactionRepository repository;
 
   AddTransaction(this.repository);
 
   @override
-  Future<Either<Failure, void>> call(Transaction transaction) async {
+  Future<Either<Failure, Transaction>> call(Transaction transaction) async {
     try {
-      await repository.addTransaction(transaction);
-      return const Right(null);
+      final result = await repository.addTransaction(transaction);
+      return result;
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

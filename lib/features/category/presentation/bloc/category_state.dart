@@ -1,19 +1,36 @@
+import 'package:equatable/equatable.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 
-abstract class CategoryState {}
+abstract class CategoryState extends Equatable {
+  const CategoryState();
 
-class CategoryInitial extends CategoryState {}
+  @override
+  List<Object?> get props => [];
+}
 
-class CategoryLoading extends CategoryState {}
+class CategoryInitial extends CategoryState {
+  const CategoryInitial();
+}
+
+class CategoryLoading extends CategoryState {
+  const CategoryLoading();
+}
 
 class CategoryLoaded extends CategoryState {
-  final List<Category> categories;
+  final List<Category>? categories;
 
-  CategoryLoaded(this.categories);
+  const CategoryLoaded(this.categories);
+
+  @override
+  List<Object?> get props => [categories];
 }
 
 class CategoryError extends CategoryState {
-  final String message;
+  final String? error;
+  final List<Category>? previousCategories;
 
-  CategoryError(this.message);
+  const CategoryError(this.error, {this.previousCategories});
+
+  @override
+  List<Object?> get props => [error, previousCategories];
 }

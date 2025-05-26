@@ -11,19 +11,19 @@ class HiveCategoryModel {
   final String name;
 
   @HiveField(2)
-  final String? description;
+  final String type;
 
   @HiveField(3)
-  final String? icon;
+  final dynamic color;
 
   @HiveField(4)
-  final int? color;
+  final String? icon;
 
   @HiveField(5)
-  final String type; // 'income' or 'expense'
+  final double? budget;
 
   @HiveField(6)
-  final String userId;
+  final String? description;
 
   @HiveField(7)
   final DateTime? createdAt;
@@ -31,23 +31,78 @@ class HiveCategoryModel {
   @HiveField(8)
   final DateTime? updatedAt;
 
-  @HiveField(9, defaultValue: false)
-  final bool isDefault;
+  @HiveField(9)
+  final String userId;
 
   @HiveField(10)
-  final double? budget;
+  final bool isDefault;
+
+  // New fields
+  @HiveField(11)
+  final String transactionType;
+
+  @HiveField(12)
+  final String? frequency;
+
+  @HiveField(13)
+  final double? defaultAmount;
+
+  @HiveField(14)
+  final bool? isActive;
+
+  @HiveField(15)
+  final bool? isRecurring;
+
+  @HiveField(16)
+  final DateTime? lastProcessedDate;
+
+  @HiveField(17)
+  final DateTime? nextProcessedDate;
+
+  @HiveField(18)
+  final bool isSynced;
+
+  @HiveField(19)
+  final bool isUpdated;
+
+  @HiveField(20)
+  final bool isDeleted;
 
   HiveCategoryModel({
     this.id,
     required this.name,
-    this.description,
-    this.icon,
-    this.color,
     required this.type,
-    required this.userId,
+    this.color,
+    this.icon,
+    this.budget,
+    this.description,
     this.createdAt,
     this.updatedAt,
-    this.isDefault = false,
-    this.budget,
+    required this.userId,
+    required this.isDefault,
+    required this.transactionType,
+    this.frequency,
+    this.defaultAmount,
+    this.isActive,
+    this.isRecurring,
+    this.lastProcessedDate,
+    this.nextProcessedDate,
+    this.isSynced = false,
+    this.isUpdated = false,
+    this.isDeleted = false,
   });
+
+  // Helper method to get color as int
+  int? get colorAsInt {
+    if (color == null) return null;
+    if (color is int) return color as int;
+    if (color is String) {
+      try {
+        return int.parse(color as String);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
 }

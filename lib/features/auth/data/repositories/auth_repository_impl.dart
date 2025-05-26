@@ -44,19 +44,42 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> signIn(String email, String password,
-      {bool rememberMe = false}) async {
+      {bool rememberMe = false, bool isGuest = false}) async {
     try {
+      if (isGuest) {
+        // Handle guest user locally
+        final guestUser = User(
+          id: 'guest_${DateTime.now().millisecondsSinceEpoch}',
+          email: email,
+          firstName: 'Guest',
+          lastName: 'User',
+          currency: 'BIRR',
+          isGuest: true,
+          language: 'en',
+        );
+        await _localDataSource.cacheUser(UserMapper.toHiveModel(guestUser));
+        return Right(guestUser);
+      }
+
       if (await _networkInfo.isConnected) {
         try {
           final response = await _remoteDataSource.signIn(
             SignInRequestModel(email: email, password: password),
           );
 
-          final user = response.user.toEntity();
+          if (response.user == null) {
+            return Left(AuthFailure(response.message ?? 'User data not found'));
+          }
+
+          if (response.token == null) {
+            return Left(AuthFailure('Authentication token not received'));
+          }
+
+          final user = response.user!.toEntity();
           await _localDataSource.cacheUser(UserMapper.toHiveModel(user));
-          await _localDataSource.cacheToken(response.token);
+          await _localDataSource.cacheToken(response.token!);
           await _localDataSource.cacheRememberMe(rememberMe);
-          _apiService.setToken(response.token);
+          _apiService.setToken(response.token!);
           return Right(user);
         } on AuthException catch (e) {
           // Clear any cached data on authentication failure
@@ -92,43 +115,34 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> signUp(
-      String email, String password, String firstName, String lastName) async {
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+  ) async {
     try {
-      if (await _networkInfo.isConnected) {
-        try {
-          final response = await _remoteDataSource.signUp(
-            SignUpRequestModel(
-              firstName: firstName,
-              lastName: lastName,
-              email: email,
-              password: password,
-            ),
-          );
+      final response = await _remoteDataSource.signUp(
+        SignUpRequestModel(
+          email: email,
+          password: password,
+          firstName: firstName,
+          lastName: lastName,
+        ),
+      );
 
-          final user = response.user.toEntity();
-          await _localDataSource.cacheUser(UserMapper.toHiveModel(user));
-          await _localDataSource.cacheToken(response.token);
-          _apiService.setToken(response.token);
-          return Right(user);
-        } on AuthException catch (e) {
-          // Clear any cached data on registration failure
-          await _localDataSource.clearCachedUser();
-          await _localDataSource.clearCachedToken();
-          _apiService.clearToken();
-          return Left(ServerFailure(e.message));
-        } catch (e) {
-          if (e.toString().contains('User validation failed')) {
-            final errorMessage =
-                e.toString().split('User validation failed: ')[1];
-            return Left(ServerFailure(errorMessage));
-          }
-          return Left(ServerFailure('Failed to sign up: $e'));
-        }
+      if (response.user != null) {
+        final user = response.user!.toEntity();
+        // Don't cache user or token during registration since email verification is required
+        return Right(user);
       } else {
-        return Left(NetworkFailure('No internet connection'));
+        return Left(AuthFailure(response.message ?? 'Failed to create user'));
       }
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message ?? 'Authentication failed'));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Server error occurred'));
     } catch (e) {
-      return Left(ServerFailure('Failed to sign up: $e'));
+      return Left(UnknownFailure(e.toString()));
     }
   }
 
@@ -261,6 +275,28 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure('Failed to clear remember me preference: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> verifyOtp(String otp, String email) async {
+    try {
+      await _remoteDataSource.verifyOtp(otp, email);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> resendVerificationCode(String email) async {
+    try {
+      final result = await _remoteDataSource.resendVerificationCode(email);
+      return Right(result);
+    } on AuthException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 

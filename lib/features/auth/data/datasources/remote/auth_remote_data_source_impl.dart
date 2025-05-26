@@ -54,11 +54,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (response.statusCode == 201) {
         return AuthResponseModel.fromJson(response.data);
       } else {
-        throw AuthException('Failed to sign up: ${response.statusMessage}');
+        final message =
+            response.data['message'] as String? ?? 'Failed to sign up';
+        throw AuthException(message);
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        final message =
+            e.response?.data['message'] as String? ?? 'Failed to sign up';
+        throw AuthException(message);
+      }
       throw AuthException('Failed to sign up: ${e.message}');
     } catch (e) {
+      if (e is AuthException) rethrow;
       throw AuthException('Failed to sign up: $e');
     }
   }
@@ -153,6 +161,63 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw AuthException('Failed to update profile: ${e.message}');
     } catch (e) {
       throw AuthException('Failed to update profile: $e');
+    }
+  }
+
+  @override
+  Future<void> verifyOtp(String otp, String email) async {
+    try {
+      final response = await _apiService.dio.post(
+        ApiConstants.verifyOtp,
+        data: {
+          'email': email,
+          'code': otp,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw AuthException(
+          response.data['message'] ?? 'OTP verification failed',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw AuthException(
+          e.response?.data['message'] ?? 'Invalid or expired verification code',
+        );
+      }
+      throw AuthException('Failed to verify OTP: ${e.message}');
+    } catch (e) {
+      throw AuthException('Failed to verify OTP: $e');
+    }
+  }
+
+  @override
+  Future<String> resendVerificationCode(String email) async {
+    try {
+      final response = await _apiService.dio.post(
+        ApiConstants.resendVerificationCode,
+        data: {'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['message'] as String;
+      } else {
+        throw AuthException(
+          response.data['message'] ?? 'Failed to resend verification code',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw AuthException(
+          e.response?.data['message'] ?? 'Email is already verified',
+        );
+      } else if (e.response?.statusCode == 404) {
+        throw AuthException('User not found');
+      }
+      throw AuthException('Failed to resend verification code: ${e.message}');
+    } catch (e) {
+      throw AuthException('Failed to resend verification code: $e');
     }
   }
 }

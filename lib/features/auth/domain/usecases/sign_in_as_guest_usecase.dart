@@ -12,11 +12,10 @@ class SignInAsGuestUseCase extends UseCase<User, NoParams> {
   @override
   Future<Either<Failure, User>> call(NoParams params) async {
     // Create a guest user with temporary credentials
-    return await repository.signUp(
+    return await repository.signIn(
       'guest_${DateTime.now().millisecondsSinceEpoch}@guest.com',
       'guest_password',
-      'Guest',
-      'User',
+      isGuest: true,
     );
   }
 }

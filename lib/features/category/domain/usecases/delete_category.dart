@@ -12,7 +12,7 @@ class DeleteCategory implements BaseUseCase<void, Params> {
   @override
   Future<Either<Failure, void>> call(Params params) async {
     try {
-      await repository.deleteCategory(params.category);
+      await repository.deleteCategory(params.category, params.userId);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -22,6 +22,7 @@ class DeleteCategory implements BaseUseCase<void, Params> {
 
 class Params {
   final Category category;
-
-  Params({required this.category});
+  final String userId;
+  
+  Params({required this.category, required this.userId});
 }

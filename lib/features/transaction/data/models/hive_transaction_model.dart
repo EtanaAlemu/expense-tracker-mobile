@@ -20,13 +20,22 @@ class HiveTransactionModel extends HiveObject {
   String categoryId;
 
   @HiveField(5)
-  String description;
+  String title;
 
   @HiveField(6)
-  DateTime date;
+  String description;
 
   @HiveField(7)
+  DateTime date;
+
+  @HiveField(8)
   bool isSynced;
+
+  @HiveField(9)
+  bool isDeleted;
+
+  @HiveField(10)
+  bool isUpdated;
 
   HiveTransactionModel({
     required this.id,
@@ -34,8 +43,39 @@ class HiveTransactionModel extends HiveObject {
     required this.type,
     required this.amount,
     required this.categoryId,
+    required this.title,
     required this.description,
     required this.date,
     this.isSynced = false,
+    this.isDeleted = false,
+    this.isUpdated = false,
   });
+
+  HiveTransactionModel copyWith({
+    String? id,
+    String? userId,
+    double? amount,
+    String? type,
+    String? categoryId,
+    String? title,
+    String? description,
+    DateTime? date,
+    bool? isSynced,
+    bool? isDeleted,
+    bool? isUpdated,
+  }) {
+    return HiveTransactionModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      amount: amount ?? this.amount,
+      type: type ?? this.type,
+      categoryId: categoryId ?? this.categoryId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      date: date ?? this.date,
+      isSynced: isSynced ?? this.isSynced,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isUpdated: isUpdated ?? this.isUpdated,
+    );
+  }
 }

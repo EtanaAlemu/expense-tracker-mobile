@@ -5,6 +5,8 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart'
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/widgets/sign_in_form.dart';
 import 'package:expense_tracker/features/auth/presentation/widgets/sign_up_form.dart';
+import 'package:expense_tracker/features/auth/presentation/pages/biometric_auth_screen.dart';
+import 'package:expense_tracker/features/main/presentation/pages/main_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   final String? error;
@@ -56,196 +58,264 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final isDark = theme.brightness == Brightness.dark;
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthBiometricRequired) {
+          return BiometricAuthScreen(
+            user: state.user,
+            token: state.token,
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // App title and icon
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.account_balance_wallet,
-                        size: 50, color: primaryColor),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Expense Tracker",
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Manage your expenses efficiently",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        if (state is AuthAuthenticated) {
+          debugPrint('User authenticated, navigating to home screen');
+          // Navigate to home screen
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainScreen()),
+              (route) => false, // This removes all previous routes
+            );
+          });
+        }
 
-              const SizedBox(height: 30),
-
-              // Tab buttons
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? theme.cardColor.withOpacity(0.2)
-                      : theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          _pageController.animateToPage(
-                            0,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              bottomLeft: Radius.circular(12),
-                            ),
-                          ),
-                          backgroundColor: _currentPage == 0
-                              ? primaryColor.withOpacity(isDark ? 0.3 : 0.1)
-                              : Colors.transparent,
-                        ),
-                        child: Text(
-                          "Sign In",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: _currentPage == 0
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          _pageController.animateToPage(
-                            1,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(12),
-                              bottomRight: Radius.circular(12),
-                            ),
-                          ),
-                          backgroundColor: _currentPage == 1
-                              ? primaryColor.withOpacity(isDark ? 0.3 : 0.1)
-                              : Colors.transparent,
-                        ),
-                        child: Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: _currentPage == 1
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Forms
-              SizedBox(
-                height: 500, // Fixed height for the forms
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  children: const [
-                    SignInForm(),
-                    SignUpForm(),
-                  ],
-                ),
-              ),
-
-              // Guest login text
-              BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, state) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          "Don't want to create an account? ",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.7),
+                        // App title and icon
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.account_balance_wallet,
+                                  size: 50,
+                                  color: Theme.of(context).colorScheme.primary),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Expense Tracker",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Manage your expenses efficiently",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.color
+                                          ?.withOpacity(0.7),
+                                    ),
+                              ),
+                            ],
                           ),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            context
-                                .read<AuthBloc>()
-                                .add(const SignInAsGuestEvent());
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+                        const SizedBox(height: 30),
+
+                        // Tab buttons
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness ==
+                                    Brightness.dark
+                                ? Theme.of(context).cardColor.withOpacity(0.2)
+                                : Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? []
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                           ),
-                          child: Text(
-                            "Continue as guest",
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () {
+                                    _pageController.animateToPage(
+                                      0,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(12),
+                                        bottomLeft: Radius.circular(12),
+                                      ),
+                                    ),
+                                    backgroundColor: _currentPage == 0
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? 0.3
+                                                    : 0.1)
+                                        : Colors.transparent,
+                                  ),
+                                  child: Text(
+                                    "Sign In",
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontWeight: _currentPage == 0
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () {
+                                    _pageController.animateToPage(
+                                      1,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(12),
+                                        bottomRight: Radius.circular(12),
+                                      ),
+                                    ),
+                                    backgroundColor: _currentPage == 1
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? 0.3
+                                                    : 0.1)
+                                        : Colors.transparent,
+                                  ),
+                                  child: Text(
+                                    "Sign Up",
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontWeight: _currentPage == 1
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Forms
+                        SizedBox(
+                          height: 500, // Fixed height for the forms
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentPage = index;
+                              });
+                            },
+                            children: const [
+                              SignInForm(),
+                              SignUpForm(),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+                // Guest login text - Fixed at bottom
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Don't want to create an account? ",
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context
+                              .read<AuthBloc>()
+                              .add(const SignInAsGuestEvent());
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          "Continue as guest",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

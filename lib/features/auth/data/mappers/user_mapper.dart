@@ -87,9 +87,10 @@ class UserMapper {
   static Future<List<int>> _compressImage(File file) async {
     final result = await FlutterImageCompress.compressWithFile(
       file.path,
-      minWidth: 800,
-      minHeight: 800,
-      quality: 80,
+      minWidth: 300,
+      minHeight: 300,
+      quality: 5,
+      format: CompressFormat.jpeg,
     );
     return result ?? await file.readAsBytes();
   }

@@ -14,6 +14,9 @@ class ApiService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+    _dio.options.validateStatus = (status) {
+      return status != null && status < 500;
+    };
 
     // Add token to headers if it exists
 

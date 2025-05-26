@@ -4,6 +4,7 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
 import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:expense_tracker/features/auth/presentation/pages/email_verification_screen.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -30,7 +31,6 @@ class _SignUpFormState extends State<SignUpForm> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _acceptTerms = false;
 
   @override
   void dispose() {
@@ -121,6 +121,69 @@ class _SignUpFormState extends State<SignUpForm> {
                 onPressed: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 },
+              ),
+            ),
+          );
+        }
+        if (state is AuthSuccess || state is ResendCodeSuccess) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified,
+                        size: 64, color: theme.colorScheme.primary),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.get('sign_up_success_title'),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      state is AuthSuccess
+                          ? state.successMessage!
+                          : l10n.get('verification_code_sent'),
+                      style: theme.textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const EmailVerificationScreen(),
+                            settings: RouteSettings(
+                              arguments: _emailController.text,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.email),
+                      label: Text(l10n.get('verify_email_now')),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -263,7 +326,7 @@ class _SignUpFormState extends State<SignUpForm> {
                     focusNode: _confirmPasswordFocus,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) {
-                      if (_formKey.currentState!.validate() && _acceptTerms) {
+                      if (_formKey.currentState!.validate()) {
                         context.read<AuthBloc>().add(
                               SignUpEvent(
                                 email: _emailController.text,
@@ -309,30 +372,11 @@ class _SignUpFormState extends State<SignUpForm> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _acceptTerms,
-                        onChanged: (value) {
-                          setState(() {
-                            _acceptTerms = value ?? false;
-                          });
-                        },
-                      ),
-                      Expanded(
-                        child: Text(
-                          l10n.get('accept_terms'),
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: state.isLoading || !_acceptTerms
+                      onPressed: state.isLoading
                           ? null
                           : () {
                               if (_formKey.currentState!.validate()) {

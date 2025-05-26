@@ -1,3 +1,6 @@
+import 'package:expense_tracker/features/auth/domain/services/biometric_service.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/resend_verification_code_usecase.dart';
+import 'package:expense_tracker/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:expense_tracker/features/auth/domain/usecases/sign_up_usecase.dart';
@@ -17,6 +20,7 @@ import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart'
 import 'package:expense_tracker/core/usecase/usecase.dart';
 import 'package:expense_tracker/core/error/failures.dart';
 import 'package:expense_tracker/core/localization/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase _signInUseCase;
@@ -33,6 +37,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final ClearRememberMeUseCase _clearRememberMeUseCase;
   final AppLocalizations _l10n;
+  final BiometricService _biometricService;
+  final VerifyOtpUseCase _verifyOtpUseCase;
+  final ResendVerificationCodeUseCase _resendVerificationCodeUseCase;
 
   AuthBloc({
     required SignInUseCase signInUseCase,
@@ -49,6 +56,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required CheckAuthStatusUseCase checkAuthStatusUseCase,
     required ClearRememberMeUseCase clearRememberMeUseCase,
     required AppLocalizations l10n,
+    required BiometricService biometricService,
+    required VerifyOtpUseCase verifyOtpUseCase,
+    required ResendVerificationCodeUseCase resendVerificationCodeUseCase,
   })  : _signInUseCase = signInUseCase,
         _signUpUseCase = signUpUseCase,
         _forgotPasswordUseCase = forgotPasswordUseCase,
@@ -63,6 +73,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _checkAuthStatusUseCase = checkAuthStatusUseCase,
         _clearRememberMeUseCase = clearRememberMeUseCase,
         _l10n = l10n,
+        _biometricService = biometricService,
+        _verifyOtpUseCase = verifyOtpUseCase,
+        _resendVerificationCodeUseCase = resendVerificationCodeUseCase,
         super(const AuthInitial()) {
     on<SignInEvent>(_onSignIn);
     on<SignUpEvent>(_onSignUp);
@@ -75,6 +88,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ChangePasswordEvent>(_onChangePassword);
     on<UpdateProfileEvent>(_onUpdateProfile);
     on<UpdateLanguageEvent>(_onUpdateLanguage);
+    on<AuthenticateWithBiometricsEvent>(_onAuthenticateWithBiometrics);
+    on<VerifyOtpEvent>(_onVerifyOtp);
+    on<ResendVerificationCodeEvent>(_onResendVerificationCode);
+
+    // Check auth status on initialization
+    add(const CheckAuthStatusEvent());
   }
 
   Future<void> _onSignIn(SignInEvent event, Emitter<AuthState> emit) async {
@@ -140,20 +159,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       await result.fold(
-        (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
+        (failure) async {
+          // Check if the error is about user already existing
+          if (failure is AuthFailure &&
+              failure.message.toLowerCase().contains('already exists')) {
+            // Try to resend verification code
+            final resendResult = await _resendVerificationCodeUseCase(
+              ResendVerificationCodeParams(email: event.email),
+            );
+
+            await resendResult.fold(
+              (resendFailure) async =>
+                  emit(AuthError(message: _getErrorMessage(resendFailure))),
+              (_) async => emit(ResendCodeSuccess()),
+            );
+          } else {
+            emit(AuthError(message: _getErrorMessage(failure)));
+          }
+        },
         (user) async {
-          final tokenResult = await _getTokenUseCase(NoParams());
-          await tokenResult.fold(
-            (failure) async =>
-                emit(AuthError(message: _getErrorMessage(failure))),
-            (token) async {
-              if (token != null) {
-                emit(AuthAuthenticated(user: user, token: token));
-              } else {
-                emit(const AuthUnauthenticated());
-              }
-            },
-          );
+          emit(AuthSuccess(
+            message: _l10n.get('sign_up_success_message'),
+            user: user,
+          ));
         },
       );
     } catch (e) {
@@ -213,26 +241,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SignInAsGuestEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
-    final result = await _signInAsGuestUseCase(NoParams());
+    try {
+      debugPrint('Starting guest sign-in process');
+      emit(const AuthLoading());
+      final result = await _signInAsGuestUseCase(NoParams());
 
-    await result.fold(
-      (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
-      (user) async {
-        final tokenResult = await _getTokenUseCase(NoParams());
-        await tokenResult.fold(
-          (failure) async =>
-              emit(AuthError(message: _getErrorMessage(failure))),
-          (token) async {
-            if (token != null) {
-              emit(AuthAuthenticated(user: user, token: token));
-            } else {
-              emit(const AuthUnauthenticated());
-            }
-          },
-        );
-      },
-    );
+      await result.fold(
+        (failure) async {
+          debugPrint('Guest sign-in failed: ${failure.message}');
+          emit(AuthError(message: _getErrorMessage(failure)));
+        },
+        (user) async {
+          debugPrint('Guest sign-in successful: ${user.email}');
+          emit(AuthAuthenticated(
+            user: user.copyWith(isGuest: true),
+            token: null,
+          ));
+        },
+      );
+    } catch (e) {
+      debugPrint('Guest sign-in error: $e');
+      emit(AuthError(message: _l10n.get('unexpected_error')));
+    }
   }
 
   Future<void> _onCheckAuthStatus(
@@ -257,7 +287,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             final user =
                 userResult.getOrElse(() => throw Exception('User not found'));
             final token = tokenResult.getOrElse(() => null);
-            emit(AuthAuthenticated(user: user, token: token));
+
+            // Check if user has enabled biometric authentication
+            final shouldUseBiometrics =
+                await _biometricService.shouldUseBiometrics();
+
+            if (shouldUseBiometrics) {
+              // Emit a state that indicates biometric auth is required
+              emit(AuthBiometricRequired(user: user, token: token));
+            } else {
+              // Proceed with normal authentication
+              emit(AuthAuthenticated(user: user, token: token));
+            }
           } else {
             emit(state.copyWith(
               isLoading: false,
@@ -276,18 +317,57 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     if (state is AuthAuthenticated) {
-      final currentUser = (state as AuthAuthenticated).user;
+      final currentState = state as AuthAuthenticated;
+      final currentUser = currentState.user;
       if (currentUser != null) {
-        final updatedUser = currentUser.copyWith(currency: event.currency);
+        emit(currentState.copyWith(isLoading: true, error: null));
+        try {
+          final updatedUser = currentUser.copyWith(currency: event.currency);
 
-        final result =
-            await _updateUserUseCase(UpdateUserParams(user: updatedUser));
-        await result.fold(
-          (failure) async =>
-              emit(AuthError(message: _getErrorMessage(failure))),
-          (user) async =>
-              emit(AuthAuthenticated(user: user, token: state.token)),
-        );
+          final result =
+              await _updateUserUseCase(UpdateUserParams(user: updatedUser));
+          await result.fold(
+            (failure) async {
+              if (failure is ServerFailure) {
+                // Extract the error message from the server response
+                final errorMessage = failure.message;
+                if (errorMessage.contains('supportedCurrencies')) {
+                  // Parse the supported currencies from the error message
+                  final supportedCurrencies = errorMessage
+                      .split('supportedCurrencies":[')[1]
+                      .split(']')[0]
+                      .replaceAll('"', '')
+                      .split(',');
+                  emit(currentState.copyWith(
+                    isLoading: false,
+                    error:
+                        'Invalid currency. Supported currencies: ${supportedCurrencies.join(', ')}',
+                  ));
+                } else {
+                  emit(currentState.copyWith(
+                    isLoading: false,
+                    error: errorMessage,
+                  ));
+                }
+              } else {
+                emit(currentState.copyWith(
+                  isLoading: false,
+                  error: _getErrorMessage(failure),
+                ));
+              }
+            },
+            (user) async => emit(AuthAuthenticated(
+              user: user,
+              token: currentState.token,
+              isLoading: false,
+            )),
+          );
+        } catch (e) {
+          emit(currentState.copyWith(
+            isLoading: false,
+            error: _l10n.get('unexpected_error'),
+          ));
+        }
       }
     }
   }
@@ -355,7 +435,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final updatedUser = currentState.user!.copyWith(
           firstName: event.firstName,
           lastName: event.lastName,
-          email: event.email,
         );
 
         final result = await _updateUserUseCase(
@@ -435,14 +514,77 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  Future<void> _onAuthenticateWithBiometrics(
+    AuthenticateWithBiometricsEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      // Validate the token if provided
+      if (event.token != null) {
+        final validateResult = await _validateTokenUseCase(
+          ValidateTokenParams(token: event.token!),
+        );
+        await validateResult.fold(
+          (failure) async =>
+              emit(AuthError(message: _getErrorMessage(failure))),
+          (isValid) async {
+            if (isValid) {
+              emit(AuthAuthenticated(user: event.user, token: event.token));
+            } else {
+              // Token is invalid, clear it and sign out
+              await _signOutUseCase(NoParams());
+              emit(const AuthUnauthenticated());
+            }
+          },
+        );
+      } else {
+        // If no token, just emit authenticated state
+        emit(AuthAuthenticated(user: event.user));
+      }
+    } catch (e) {
+      emit(AuthError(message: _l10n.get('unexpected_error')));
+    }
+  }
+
+  Future<void> _onVerifyOtp(
+      VerifyOtpEvent event, Emitter<AuthState> emit) async {
+    emit(OtpVerificationLoading());
+    final result = await _verifyOtpUseCase(
+        VerifyOtpParams(otp: event.otp, email: event.email));
+    result.fold(
+      (failure) => emit(OtpVerificationFailure(failure.message)),
+      (_) => emit(OtpVerificationSuccess()),
+    );
+  }
+
+  Future<void> _onResendVerificationCode(
+    ResendVerificationCodeEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      emit(const AuthLoading());
+      final result = await _resendVerificationCodeUseCase(
+        ResendVerificationCodeParams(email: event.email),
+      );
+
+      await result.fold(
+        (failure) async => emit(AuthError(message: _getErrorMessage(failure))),
+        (_) async => emit(ResendCodeSuccess()),
+      );
+    } catch (e) {
+      emit(AuthError(message: _l10n.get('unexpected_error')));
+    }
+  }
+
   String _getErrorMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure:
-        return failure.message;
-      case CacheFailure:
-        return failure.message;
-      default:
-        return _l10n.get('unexpected_error');
+    if (failure is ServerFailure) {
+      return failure.message;
+    } else if (failure is CacheFailure) {
+      return failure.message;
+    } else if (failure is AuthFailure) {
+      return failure.message;
+    } else {
+      return _l10n.get('unexpected_error');
     }
   }
 }

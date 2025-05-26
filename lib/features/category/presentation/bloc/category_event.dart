@@ -33,3 +33,7 @@ class GetCategoriesByType extends CategoryEvent {
 
   GetCategoriesByType(this.type);
 }
+
+class SyncCategories extends CategoryEvent {}
+
+class ClearCategories extends CategoryEvent {}

@@ -22,16 +22,19 @@ class HiveTransactionModelAdapter extends TypeAdapter<HiveTransactionModel> {
       type: fields[2] as String,
       amount: fields[3] as double,
       categoryId: fields[4] as String,
-      description: fields[5] as String,
-      date: fields[6] as DateTime,
-      isSynced: fields[7] as bool,
+      title: fields[5] as String,
+      description: fields[6] as String,
+      date: fields[7] as DateTime,
+      isSynced: fields[8] as bool,
+      isDeleted: fields[9] as bool,
+      isUpdated: fields[10] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveTransactionModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -43,11 +46,17 @@ class HiveTransactionModelAdapter extends TypeAdapter<HiveTransactionModel> {
       ..writeByte(4)
       ..write(obj.categoryId)
       ..writeByte(5)
-      ..write(obj.description)
+      ..write(obj.title)
       ..writeByte(6)
-      ..write(obj.date)
+      ..write(obj.description)
       ..writeByte(7)
-      ..write(obj.isSynced);
+      ..write(obj.date)
+      ..writeByte(8)
+      ..write(obj.isSynced)
+      ..writeByte(9)
+      ..write(obj.isDeleted)
+      ..writeByte(10)
+      ..write(obj.isUpdated);
   }
 
   @override

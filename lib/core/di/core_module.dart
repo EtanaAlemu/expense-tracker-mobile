@@ -12,6 +12,8 @@ import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:expense_tracker/core/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:expense_tracker/core/services/notification/notification_service.dart';
+import 'package:expense_tracker/features/transaction/domain/repositories/transaction_repository.dart';
 
 @module
 abstract class CoreModule {
@@ -73,4 +75,14 @@ abstract class CoreModule {
 
   @singleton
   AppLocalizations appLocalizations() => AppLocalizations(const Locale('en'));
+
+  @singleton
+  NotificationService notificationService(
+    TransactionRepository transactionRepository,
+    String userId,
+  ) =>
+      NotificationService(
+        transactionRepository: transactionRepository,
+        userId: userId,
+      );
 }

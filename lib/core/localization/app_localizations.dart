@@ -52,6 +52,12 @@ class AppLocalizations {
       'there': 'there',
       'add_first_transaction': 'Add your first transaction',
 
+      // Navigation
+      'nav_home': 'Home',
+      'nav_transactions': 'Transactions',
+      'nav_categories': 'Categories',
+      'nav_profile': 'Profile',
+
       // Greetings
       'good_morning': 'Good Morning',
       'good_afternoon': 'Good Afternoon',
@@ -75,6 +81,20 @@ class AppLocalizations {
       'trend_down': 'Trending Down',
       'trend_stable': 'Stable',
       'percentage_change': '{percentage}% {direction} from last month',
+      'financial_health': 'Financial Health',
+      'top_spending_category': 'Top spending category',
+      'savings_rate': 'Savings Rate',
+      'spending_by_category': 'Spending by Category',
+      'income_by_category': 'Income by Category',
+      'view_all': 'View All',
+      'trend_analysis': 'Trend Analysis',
+      'excellent_savings_rate':
+          'Excellent savings rate! Keep up the good work.',
+      'good_savings_rate': 'Good savings rate. Consider increasing it to 20%.',
+      'try_increase_savings_rate':
+          'Try to increase your savings rate to at least 10%.',
+      'expenses_exceed_income':
+          'Your expenses exceed your income. Review your spending.',
 
       // Auth
       'login': 'Login',
@@ -102,6 +122,8 @@ class AppLocalizations {
       'login_error': 'Invalid email or password',
       'register_error': 'Failed to create account',
       'email_in_use': 'Email already in use',
+      'enter_first_name': 'Enter your first name',
+      'enter_last_name': 'Enter your last name',
       'enter_email': 'Enter your email',
       'enter_password': 'Enter your password',
       'enter_confirm_password': 'Confirm your password',
@@ -115,6 +137,19 @@ class AppLocalizations {
       'send_reset_link': 'Send Reset Link',
       'forgot_password_message':
           'Enter your email address and we\'ll send you a link to reset your password.',
+      'sign_up_success_title': 'Account Created!',
+      'sign_up_success_message':
+          'Your account was created successfully. Please verify your email to activate your account.',
+      'verify_email_now': 'Verify Email Now',
+      'enter_the_6_digit_code': 'Enter the 6-digit code sent to your email',
+      'verify': 'Verify',
+      'resend_code': 'Resend Code',
+      'email_verification_success_title': 'Email Verified!',
+      'email_verification_success_message':
+          'Your email has been verified successfully.',
+      'email_verification_success_submessage':
+          'You can now log in to your account.',
+      'go_to_sign_in': 'Go to Sign In',
 
       // Profile
       'profile': 'Profile',
@@ -207,6 +242,20 @@ class AppLocalizations {
       'preferences': 'Preferences',
       'appearance': 'Appearance',
       'logout_confirmation': 'Are you sure you want to logout?',
+      "export_data": "Export Data",
+      "export_data_description":
+          "Export your transaction data in various formats",
+      "export_as_csv": "Export as CSV",
+      "export_as_excel": "Export as Excel",
+      "export_as_pdf": "Export as PDF",
+      "preparing_export": "Preparing export...",
+      "export_completed": "Export completed successfully",
+      "permission_required": "Permission Required",
+      "permission_message":
+          "Storage permission is required to export data. Please grant permission in app settings.",
+      "open_settings": "Open Settings",
+      "error_exporting": "Error exporting data: {error}",
+      "currency_dialog_title": "Currency Settings",
 
       // Currency Names
       'currency_birr': 'Ethiopian Birr',
@@ -217,6 +266,7 @@ class AppLocalizations {
       'currency_inr': 'Indian Rupee',
       'currency_cny': 'Chinese Yuan',
       'close': 'Close',
+      'press_back_again_to_exit': 'Press back again to exit',
 
       // Edit Profile Dialog
       'image_pick_error': 'Failed to pick image',
@@ -267,11 +317,61 @@ class AppLocalizations {
           'Are you sure you want to delete this transaction?',
       'transaction_updated': 'Transaction updated successfully',
       'transaction_delete_error': 'Failed to delete transaction',
+
+      // New keys
+      'default_amount': 'Default Amount',
+      'enter_default_amount': 'Enter default amount',
+      'default_amount_required':
+          'Default amount is required for recurring transactions',
+      'active': 'Active',
+      'quarterly': 'Quarterly',
+
+      // Transaction List Page
+      'search_transactions': 'Search transactions',
+      'filters': 'Filters',
+      'clear_filters': 'Clear Filters',
+      'apply_filters': 'Apply Filters',
+      'type': 'Type',
+      'expense': 'Expense',
+      'categories': 'Categories',
+      'date_range': 'Date Range',
+      'no_transactions_found': 'No transactions found',
+      'transaction_details': 'Transaction Details',
+
+      // Categories Page
+      'search_categories': 'Search categories',
+      'no_categories_found': 'No categories found',
+      'add_first_category': 'Add your first category',
+      'category_details': 'Category Details',
+
+      // Import Data
+      'import_data': 'Import Data',
+      'import_from_csv': 'Import from CSV',
+      'import_from_excel': 'Import from Excel',
+      'error_importing_csv': 'Error importing CSV: {error}',
+      'error_importing_excel': 'Error importing Excel: {error}',
+      'no_transactions_found_in_the_file': 'No transactions found in the file',
+      'import_success': '{count} transactions imported successfully',
+      'error_importing': 'Error importing file: {error}',
+      'add_transaction_to_get_started': 'Add a transaction to get started',
+
+      // Category Distribution
+      'no_expenses_to_display': 'No expenses to display',
+      'add_expenses_to_see_distribution':
+          'Add some expenses to see your spending distribution',
+
+      // Verification Code Sent
+      'verification_code_sent_title': 'Verification Code Sent',
+      'verification_code_sent_message':
+          'A new verification code has been sent to your email address',
+      'verification_code_sent_submessage':
+          'Please check your inbox and enter the code below',
+      'ok': 'OK',
     },
     'am': {
       // Common
       'app_name': 'የወጪ መከታተል',
-      'cancel': 'ሰርዝ',
+      'cancel': 'ተው',
       'save': 'አስቀምጥ',
       'delete': 'ሰርዝ',
       'edit': 'አርትዕ',
@@ -291,6 +391,12 @@ class AppLocalizations {
       'try_again': 'እባክዎ እንደገና ይሞከሩ',
       'there': 'እዚያ',
       'add_first_transaction': 'የመጀመሪያዎን ግብይት ያክሉ',
+
+      // Navigation
+      'nav_home': 'ቤት',
+      'nav_transactions': 'ግብይቶች',
+      'nav_categories': 'ምድቦች',
+      'nav_profile': 'መገለጫ',
 
       // Greetings
       'good_morning': 'እንደምን አደሩ',
@@ -315,6 +421,17 @@ class AppLocalizations {
       'trend_down': 'እየቀነሰ ነው',
       'trend_stable': 'ቋሚ ነው',
       'percentage_change': 'ከባለፈው ወር {percentage}% {direction}',
+      'financial_health': 'የገንዘብ ጤና',
+      'top_spending_category': 'በጣም የተጠቀሰበት ምድብ',
+      'savings_rate': 'የቁጠባ መጠን',
+      'spending_by_category': 'በምድብ የሚደረገው ወጪ',
+      'income_by_category': 'በምድብ የሚገኘው ገቢ',
+      'view_all': 'ሁሉንም ይመልከቱ',
+      'trend_analysis': 'የአዝማሚያ ትንታኔ',
+      'excellent_savings_rate': 'በጣም ጥሩ የቁጠባ መጠን! እንዲህ ቀጥሉ።',
+      'good_savings_rate': 'ጥሩ የቁጠባ መጠን። ወደ 20% ማድረስ ይሞክሩ።',
+      'try_increase_savings_rate': 'የቁጠባዎን መጠን ቢያንስ 10% ያድሱ።',
+      'expenses_exceed_income': 'ወጪዎ ከገቢዎ በላይ ነው። ወጪዎን ይመርምሩ።',
 
       // Auth
       'login': 'ግባ',
@@ -342,6 +459,8 @@ class AppLocalizations {
       'login_error': 'ልክ ያልሆነ ኢሜይል ወይም የይለፍ ቃል',
       'register_error': 'መለያ መፍጠር አልተሳካም',
       'email_in_use': 'ኢሜይል አስቀድሞ ተጠቅሟል',
+      'enter_first_name': 'የመጀመሪያ ስምዎን ያስገቡ',
+      'enter_last_name': 'የአያት ስምዎን ያስገቡ',
       'enter_email': 'ኢሜይልዎን ያስገቡ',
       'enter_password': 'የይለፍ ቃልዎን ያስገቡ',
       'enter_confirm_password': 'የይለፍ ቃልዎን ያረጋግጡ',
@@ -352,9 +471,22 @@ class AppLocalizations {
       'last_name_required': 'እባክዎ የአያት ስምዎን ያስገቡ',
       'accept_terms': 'የአገልግሎት ውሎችን እቀበላለሁ',
       'open_email_app': 'ኢሜይል መተግበሪያ ክፈት',
-      'send_reset_link': 'ዳግም የማዘጋጃ አገናኝ ይላኩ',
       'forgot_password_message':
           'ኢሜይል አድራሻዎን ያስገቡ እና የይለፍ ቃልዎን ለማዘጋጀት አገናኝ እንልካለን።',
+      'sign_up_success_title': 'መለያዎ ተፈጥሯል!',
+      "sign_up_success_message":
+          "መለያዎ በተሳካ ሁኔታ ተፈጥሯል። መለያዎን ለማንቃት እባክዎን ኢሜይልዎን ያረጋግጡ።",
+      "verify_email_now": "ኢሜይል ያረጋግጡ",
+      "continue": "ቀጥል",
+      "success_message": "በተሳካ ሁኔታ ተጠናቅቋል!",
+      "enter_the_6_digit_code": "ወደ ኢሜይልዎ የተላከውን 6-አሃዝ ኮድ ያስገቡ",
+      "verify": "ያረጋግጡ",
+      "resend_code": "ኮድ ዳግም ላክ",
+      "email_verification_success_title": "ኢሜይል ተፈጥሯል!",
+      "email_verification_success_message": "ኢሜይልዎ በተሳካ ሁኔታ ተፈጥሯል።",
+      "email_verification_success_submessage":
+          "መለያዎን ለማንቃት እባክዎን ኢሜይልዎን ያረጋግጡ።",
+      'go_to_sign_in': 'ግባ ይጀምሩ',
 
       // Profile
       'profile': 'መገለጫ',
@@ -381,6 +513,7 @@ class AppLocalizations {
       'system_theme': 'የስርዓት ገጽታ',
       'light_theme': 'ብርሃን ገጽታ',
       'dark_theme': 'ጨለማ ገጽታ',
+      'currency_dialog_title': 'ምንዛሪ ምርጫ',
 
       // Expenses
       'expense_type': 'ወጪ',
@@ -440,13 +573,24 @@ class AppLocalizations {
       'validation_error': 'እባክዎ ግብዣዎን ያረጋግጡ',
       'required_field': 'ይህ መስክ ያስፈልጋል',
       'invalid_input': 'ልክ ያልሆነ ግብዣ',
-      'success_message': 'ክወናው በተሳክቶ ተጠናቅቋል',
 
       // Profile Page
       'account_settings': 'የመለያ ቅንብሮች',
       'preferences': 'ምርጫዎች',
       'appearance': 'መልክ',
-      'logout_confirmation': 'ውጣ እንደሚፈልጉ እርግጠኛ ነዎት?',
+      'logout_confirmation': 'ለማውጣት እንደሚፈልጉ እርግጠኛ ነዎት?',
+      "export_data": "መረጃ አውጣው",
+      "export_data_description": "የግብይት ውሂብዎን በተለያዩ ቅርጸቶች አውጣው",
+      "export_as_csv": "እንደ CSV አውጣው",
+      "export_as_excel": "እንደ Excel አውጣው",
+      "export_as_pdf": "እንደ PDF አውጣው",
+      "preparing_export": "ለማውጣት ይዘጋጃል...",
+      "export_completed": "ውጣት በተሳክቶ ተጠናቅቋል",
+      "permission_required": "ፍቃድ ያስፈልጋል",
+      "permission_message":
+          "ውሂብን ለመውጣት የማከማቻ ፍቃድ ያስፈልጋል። እባክዎ በአፕሊኬሽን ቅንብሮች ውስጥ ፍቃድ ይስጡ።",
+      "open_settings": "ቅንብሮችን ክፈት",
+      "error_exporting": "ውሂብን በመውጣት ላይ ስህተት: {error}",
 
       // Currency Names
       'currency_birr': 'ኢትዮጵያ ብር',
@@ -457,6 +601,7 @@ class AppLocalizations {
       'currency_inr': 'የህንድ ሩፒ',
       'currency_cny': 'የቻይና ዩዋን',
       'close': 'ዝጋ',
+      'press_back_again_to_exit': 'ለማውጣት እንደገና ይጫኑ',
 
       // Edit Profile Dialog
       'image_pick_error': 'ስዕል መምረጥ አልተሳካም',
@@ -494,240 +639,49 @@ class AppLocalizations {
       'edit_transaction': 'ግብይት አርትዕ',
       'update_transaction': 'ግብይት አዘምን',
       'delete_transaction': 'ግብይት ሰርዝ',
-      'delete_transaction_confirmation': 'ይህን ግብይት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?',
-      'transaction_update_error': 'ግብይቱን ማዘምን አልተሳካም',
-      'transaction_delete_error': 'ግብይቱን ማሰረዝ አልተሳካም',
-    },
-    'om': {
-      // Common
-      'app_name': 'Baa\'insa Qabeenyaa',
-      'cancel': 'Dhiisi',
-      'save': 'Olkaa\'i',
-      'delete': 'Haquu',
-      'edit': 'Jijjiiruu',
-      'error': 'Dogoggora',
-      'success': 'Milkaa\'e',
-      'loading': 'Fe\'aa jira...',
-      'retry': 'Irra deebi\'i',
-      'confirm': 'Mirkaneessa',
-      'back': 'Deebi\'i',
-      'next': 'Itti aanaa',
-      'done': 'Xumura',
-      'search': 'Barbaadi',
-      'filter': 'Seensa',
-      'sort': 'Qubeessa',
-      'no_data': 'Odeeffannoo hin jiru',
-      'no_internet': 'Internet hin jiru',
-      'try_again': 'Mee irra deebi\'i',
-      'there': 'asii',
-      'add_first_transaction': 'Fe\'aa Keessan Duraa Dabalchi',
+      'delete_transaction_confirmation': 'ግብይት ሰርዝ እንደሚፈልጉ እርግጠኛ ነዎት?',
+      'transaction_update_error': 'ግብይት አዘምን አልተሳካም',
+      'transaction_delete_error': 'ግብይት ሰርዝ አልተሳካም',
 
-      // Greetings
-      'good_morning': 'Baga Bariin Dhuftan',
-      'good_afternoon': 'Baga Guyyaa Dhuftan',
-      'good_evening': 'Baga Galgala Dhuftan',
+      // Transaction List Page
+      'search_transactions': 'ግብይቶችን ፈልግ',
+      'filters': 'አጣራዎች',
+      'clear_filters': 'አጣራዎችን ያጽዱ',
+      'apply_filters': 'አጣራዎችን ይተግብሩ',
+      'type': 'ዓይነት',
+      'expense': 'ወጪ',
+      'categories': 'ምድቦች',
+      'date_range': 'የቀን ክልል',
+      'no_transactions_found': 'ምንም ግብይት አልተገኘም',
+      'transaction_details': 'የግብይት ዝርዝሮች',
 
-      // Home Page
-      'financial_overview': 'Qabeenya Keessan Ibsa',
-      'total_balance': 'Waliigala Qabeenya',
-      'income': 'Argama',
-      'expenses': 'Baa\'insa',
-      'savings': 'Qabeenya',
-      'recent_transactions': 'Fe\'aa Duraa',
-      'no_transactions': 'Fe\'aa Hin Jiru',
-      'monthly_trend': 'Ji\'a Ji\'aa Jijjiirama',
-      'income_trend': 'Argama Jijjiirama',
-      'expense_trend': 'Baa\'insa Jijjiirama',
-      'savings_trend': 'Qabeenya Jijjiirama',
-      'this_month': 'Ji\'a Kana',
-      'last_month': 'Ji\'a Duraa',
-      'trend_up': 'Ol\'aanaa Jira',
-      'trend_down': 'Gadii Jira',
-      'trend_stable': 'Qindaa\'e',
-      'percentage_change': 'Ji\'a Duraa irraa {percentage}% {direction}',
+      // Categories Page
+      'search_categories': 'ምድቦችን ፈልግ',
+      'no_categories_found': 'ምንም ምድብ አልተገኘም',
+      'add_first_category': 'የመጀመሪያዎን ምድብ ያክሉ',
+      'category_details': 'የምድብ ዝርዝሮች',
 
-      // Auth
-      'login': 'Seeni',
-      'register': 'Galmaa\'i',
-      'email': 'Imeelii',
-      'password': 'Jecha Iccitii',
-      'confirm_password': 'Jecha Iccitii Mirkaneessa',
-      'forgot_password': 'Jecha Iccitii Keessan Dagattanii?',
-      'dont_have_account': 'Herrega Hin Qabduu?',
-      'already_have_account': 'Herrega Duraa Qabduu?',
-      'sign_in': 'Seeni',
-      'sign_up': 'Galmaa\'i',
-      'sign_out': 'Ba\'i',
-      'guest_mode': 'Keessatti Itti Fufe',
-      'remember_me': 'Na Yaadadhu',
-      'reset_password': 'Jecha Iccitii Irra Deebi\'i',
-      'password_reset_sent': 'Imeelii Jecha Iccitii Irra Deebi\'i Ergame',
-      'password_reset_sent_message':
-          'Jecha Iccitii Irra Deebi\'uu Immeelii Keessan Ergame. Mee Imeelii Keessan Mirkaneessaafi Tilmaama Hordofaa.',
-      'password_reset_success': 'Jecha Iccitii Milkaa\'e',
-      'password_reset_error': 'Jecha Iccitii Irra Deebi\'uu Hin Dandeenye',
-      'invalid_email': 'Imeelii Dogoggora',
-      'invalid_password': 'Jecha Iccitii Guutuu 6 Qubee Qabaachuu Qaba',
-      'passwords_dont_match': 'Jecha Iccitii Wal Hin Qabatan',
-      'login_error': 'Imeelii Ykn Jecha Iccitii Dogoggora',
-      'register_error': 'Herrega Uumuu Hin Dandeenye',
-      'email_in_use': 'Imeelii Duraan Itti Fayyadamaa Jira',
-      'enter_email': 'Imeelii Keessan Galchi',
-      'enter_password': 'Jecha Iccitii Keessan Galchi',
-      'enter_confirm_password': 'Jecha Iccitii Keessan Mirkaneessa',
-      'email_required': 'Mee Imeelii Keessan Galchi',
-      'password_required': 'Mee Jecha Iccitii Keessan Galchi',
-      'confirm_password_required': 'Mee Jecha Iccitii Keessan Mirkaneessa',
-      'first_name_required': 'Mee Maqaa Dhalataa Keessan Galchi',
-      'last_name_required': 'Mee Maqaa Abbaa Keessan Galchi',
-      'accept_terms': 'Haala Tajaajilaa Fudhaa',
-      'open_email_app': 'App Imeelii Bani',
-      'send_reset_link': 'Link Irra Deebi\'uu Ergaa',
-      'forgot_password_message':
-          'Imeelii Keessan Galchaa, Jecha Iccitii Keessan Irra Deebi\'uu Link Erganna.',
+      // Import Data
+      'import_data': 'መረጃ አስገባ',
+      'import_from_csv': 'ከ CSV አስገባ',
+      'import_from_excel': 'ከ Excel አስገባ',
+      'error_importing_csv': 'CSV ን በማስገባት ላይ ስህተት: {error}',
+      'error_importing_excel': 'Excel ን በማስገባት ላይ ስህተት: {error}',
+      'no_transactions_found_in_the_file': 'በፋይሉ ውስጥ ምንም ግብይት አልተገኘም',
+      'import_success': '{count} ግብይቶች በተሳክቶ ተገብተዋል',
+      'error_importing': 'ፋይሉን በማስገባት ላይ ስህተት: {error}',
+      'add_transaction_to_get_started': 'ለመጀመር ግብይት ያክሉ',
 
-      // Profile
-      'profile': 'Seenaa',
-      'language': 'Afaan',
-      'currency': 'Qarshii',
-      'settings': 'Qindaawwan',
-      'logout': 'Ba\'i',
-      'edit_profile': 'Seenaa Jijjiiruu',
-      'change_password': 'Jecha Iccitii Jijjiiruu',
-      'current_password': 'Jecha Iccitii Ammaa',
-      'new_password': 'Jecha Iccitii Haaraa',
-      'confirm_new_password': 'Jecha Iccitii Haaraa Mirkaneessa',
-      'profile_picture': 'Suuraa Seenaa',
-      'take_photo': 'Suuraa Fakkadhu',
-      'choose_photo': 'Galeerii Irraa Filadhu',
-      'remove_photo': 'Suuraa Qaqqabsi',
-      'first_name': 'Maqaa Dhalataa',
-      'last_name': 'Maqaa Abbaa',
-      'phone': 'Lakkoofsa Bilbilaa',
-      'address': 'Teessoo',
-      'bio': 'Seenaa',
-      'notifications': 'Beekumsa',
-      'dark_mode': 'Gara Garaa',
-      'system_theme': 'Qaama Sirnii',
-      'light_theme': 'Qaama Ifaa',
-      'dark_theme': 'Qaama Garaa',
+      // Category Distribution
+      'no_expenses_to_display': 'ምንም ወጪዎች አልተገኙም',
+      'add_expenses_to_see_distribution': 'የሚደረጉትን ወጪዎች ለማየት አንዳንድ ወጪዎችን ያክሉ',
 
-      // Expenses
-      'expense_type': 'Baa\'insa',
-      'income_type': 'Argama',
-      'transfer': 'Dhiibbaa',
-      'recurring': 'Irra Deebi\'u',
-      'one_time': 'Tokko',
-      'daily': 'Guyyaa Guyyaa',
-      'weekly': 'Torbee Torbee',
-      'monthly': 'Ji\'a Ji\'a',
-      'yearly': 'Waggaa Waggaa',
-      'start_date': 'Guyyaa Jalqabaa',
-      'end_date': 'Guyyaa Xumuraa',
-      'frequency': 'Irra Deebi\'uu',
-      'total_expenses': 'Waliigala Baa\'insa',
-      'total_income': 'Waliigala Argama',
-      'net_balance': 'Qabeenya Sirrii',
-
-      // Categories
-      'food': 'Nyaata',
-      'transport': 'Imala',
-      'shopping': 'Bitaa',
-      'bills': 'Bilii',
-      'entertainment': 'Boqonnaa',
-      'health': 'Fayyaa',
-      'education': 'Barumsa',
-      'other': 'Kaan',
-      'add_category': 'Garee Dabalchi',
-      'edit_category': 'Garee Jijjiiruu',
-      'delete_category': 'Garee Qaqqabsi',
-      'category_name': 'Maqaa Garee',
-      'enter_category_name': 'Maqaa Garee Galchi',
-      'category_name_required': 'Mee Maqaa Garee Galchi',
-      'delete_category_confirmation': 'Mee {name} Haquu Barbaaddanii?',
-      'budget': 'Bajeta',
-      'enter_budget': 'Lakki Bajetaa Galchi',
-      'description': 'Ibsa',
-
-      // Messages
-      'profile_updated': 'Seenaan keessan milkaa\'e',
-      'language_updated': 'Afaan keessan milkaa\'e',
-      'currency_updated': 'Qarshii keessan milkaa\'e',
-      'expense_added': 'Baa\'insa keessan milkaa\'e',
-      'income_added': 'Argama keessan milkaa\'e',
-      'transaction_deleted': 'Fe\'aan keessan milkaa\'e',
-      'category_added': 'Garee keessan milkaa\'e',
-      'category_updated': 'Garee keessan milkaa\'e',
-      'category_deleted': 'Garee keessan milkaa\'e',
-      'password_changed': 'Jecha Iccitii keessan milkaa\'e',
-      'settings_updated': 'Qindaawwan keessan milkaa\'e',
-      'changes_saved': 'Jijjirama keessan milkaa\'e',
-      'error_occurred': 'Dogoggora Dhufe',
-      'try_again_later': 'Mee Booda Irra Deebi\'i',
-      'operation_failed': 'Tarkaanfii Hin Milkaane',
-      'network_error': 'Dogoggora Internet',
-      'server_error': 'Dogoggora Server',
-      'validation_error': 'Mee Galchi Keessan Mirkaneessa',
-      'required_field': 'Mee Galchi Kana Galchi',
-      'invalid_input': 'Galchi Dogoggora',
-      'success_message': 'Tarkaanfii Milkaa\'e',
-
-      // Profile Page
-      'account_settings': 'Qindaawwan Herregaa',
-      'preferences': 'Filatamaa',
-      'appearance': 'Mul\'ata',
-      'logout_confirmation': 'Ba\'uu Barbaaddanii?',
-
-      // Currency Names
-      'currency_birr': 'Birra Itoophiyaa',
-      'currency_usd': 'Doolaara Ameerikaa',
-      'currency_eur': 'Yuuroo',
-      'currency_gbp': 'Paawundii Ingilizii',
-      'currency_jpy': 'Yeenaa Jappaanii',
-      'currency_inr': 'Ruupii Hindii',
-      'currency_cny': 'Yuwaanii Chaayinaa',
-      'close': 'Cufi',
-
-      // Edit Profile Dialog
-      'image_pick_error': 'Suuraa Filuu Hin Dandeenye',
-      'profile_update_error': 'Seenaa Jijjiiruu Dogoggora:',
-      'dismiss': 'Cufi',
-
-      // Category Errors
-      'category_id_required': 'ID Garee Barbaachisa',
-      'category_not_found': 'Garee Hin Argamne',
-      'cannot_update_default': 'Garee Default Jijjiiruu Hin Dandeenye',
-      'cannot_delete_default': 'Garee Default Haquu Hin Dandeenye',
-      'server_failure': 'Dogoggora Server',
-      'cache_failure': 'Dogoggora Cache',
-      'unexpected_error': 'Dogoggora Hin Eegamne',
-
-      // Category Remote Data Source Errors
-      'failed_to_save_category': 'Garee Galchuu Hin Dandeenye',
-      'failed_to_get_category': 'Garee Argachuu Hin Dandeenye',
-      'failed_to_get_categories': 'Gareewwan Argachuu Hin Dandeenye',
-      'failed_to_update_category': 'Garee Jijjiiruu Hin Dandeenye',
-      'failed_to_delete_category': 'Garee Haquu Hin Dandeenye',
-      'failed_to_get_categories_by_type':
-          'Gareewwan Gosaan Argachuu Hin Dandeenye',
-
-      // Add Transaction Page
-      'add_transaction': 'Fe\'aa Dabalchi',
-      'title': 'Maqaa',
-      'enter_amount': 'Lakki Galchi',
-      'select_category': 'Garee Filadhu',
-      'no_categories': 'Gareewwan Hin Argamne',
-      'date': 'Guyyaa',
-      'time': 'Sa\'aa',
-      'no_description': 'Ibsa Hin Qabne',
-
-      // Edit Transaction Page
-      'edit_transaction': 'Fe\'aa Jijjiiruu',
-      'update_transaction': 'Fe\'aa Jijjiiruu',
-      'delete_transaction': 'Fe\'aa Haquu',
-      'delete_transaction_confirmation': 'Fe\'aa Kana Haquu Barbaaddanii?',
-      'transaction_update_error': 'Fe\'aa Jijjiiruu Hin Dandeenye',
-      'transaction_delete_error': 'Fe\'aa Haquu Hin Dandeenye',
-    },
+      // Verification Code Sent
+      'verification_code_sent_title': 'የማረጋገጫ ኮድ ተልኳል',
+      'verification_code_sent_message': 'አዲስ የማረጋገጫ ኮድ ወደ ኢሜይል አድራሻዎ ተልኳል።',
+      'verification_code_sent_submessage':
+          'እባክዎ የገቢ መልእክትዎን ያረጋግጡ እና ኮዱን ከዚህ በታች ያስገቡ',
+      'ok': 'እሺ',
+    }
   };
 }

@@ -6,7 +6,7 @@ import 'package:expense_tracker/features/auth/domain/usecases/update_user_usecas
 abstract class AuthRepository {
   Future<Either<Failure, User>> getCurrentUser();
   Future<Either<Failure, User>> signIn(String email, String password,
-      {bool rememberMe = false});
+      {bool rememberMe = false, bool isGuest = false});
   Future<Either<Failure, User>> signUp(
       String email, String password, String firstName, String lastName);
   Future<Either<Failure, void>> signOut();
@@ -20,4 +20,6 @@ abstract class AuthRepository {
   Future<Either<Failure, bool>> validateToken(String token);
   Future<Either<Failure, bool>> getRememberMe();
   Future<Either<Failure, void>> clearRememberMe();
+  Future<Either<Failure, void>> verifyOtp(String otp, String email);
+  Future<Either<Failure, String>> resendVerificationCode(String email);
 }

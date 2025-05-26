@@ -12,11 +12,7 @@ class GetCategoriesByType implements BaseUseCase<List<Category>, Params> {
   @override
   Future<Either<Failure, List<Category>>> call(Params params) async {
     try {
-      final categories = await repository.getCategoriesByType(params.type);
-      return categories.fold(
-        (failure) => Left(failure),
-        (categories) => Right(categories),
-      );
+      return await repository.getCategoriesByType(params.type, params.userId);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -25,6 +21,7 @@ class GetCategoriesByType implements BaseUseCase<List<Category>, Params> {
 
 class Params {
   final String type;
+  final String userId;
 
-  Params({required this.type});
+  Params({required this.type, required this.userId});
 }

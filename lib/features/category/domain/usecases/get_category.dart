@@ -12,7 +12,7 @@ class GetCategory implements BaseUseCase<Category?, Params> {
   @override
   Future<Either<Failure, Category?>> call(Params params) async {
     try {
-      final category = await repository.getCategory(params.id);
+      final category = await repository.getCategory(params.id, params.userId);
       return category.fold(
         (failure) => Left(failure),
         (category) => Right(category),
@@ -25,6 +25,7 @@ class GetCategory implements BaseUseCase<Category?, Params> {
 
 class Params {
   final String id;
+  final String userId;
 
-  Params({required this.id});
+  Params({required this.id, required this.userId});
 }

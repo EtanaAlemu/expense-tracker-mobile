@@ -1,5 +1,4 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'base_local_data_source.dart';
 
 abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
@@ -13,10 +12,7 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   Future<void> _initializeBox() async {
     try {
       box = await Hive.openBox<T>(boxName);
-      debugPrint('Box $boxName opened successfully');
-    } catch (e, stackTrace) {
-      debugPrint('Error opening box $boxName: $e');
-      debugPrint('Stack trace: $stackTrace');
+    } catch (e) {
       rethrow;
     }
   }
@@ -25,11 +21,8 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   Future<void> save(T item) async {
     try {
       final id = getId(item);
-      debugPrint('💾 Saving item to box $boxName with id: $id');
       await box.put(id, item);
-      debugPrint('✅ Item saved successfully');
     } catch (e) {
-      debugPrint('❌ Error saving item to box $boxName: $e');
       rethrow;
     }
   }
@@ -37,14 +30,11 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   @override
   Future<void> saveAll(List<T> items) async {
     try {
-      debugPrint('💾 Saving ${items.length} items to box $boxName');
       final Map<String, T> itemsMap = {
         for (var item in items) getId(item): item,
       };
       await box.putAll(itemsMap);
-      debugPrint('✅ All items saved successfully');
     } catch (e) {
-      debugPrint('❌ Error saving items to box $boxName: $e');
       rethrow;
     }
   }
@@ -52,12 +42,9 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   @override
   Future<T?> get(String id) async {
     try {
-      debugPrint('🔍 Getting item from box $boxName with id: $id');
       final item = box.get(id);
-      debugPrint('✅ Item retrieved successfully');
       return item;
     } catch (e) {
-      debugPrint('❌ Error getting item from box $boxName: $e');
       rethrow;
     }
   }
@@ -66,14 +53,8 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   Future<List<T>> getAll() async {
     try {
       final values = box.values.toList();
-      debugPrint(
-          '📦 Getting all items from box $boxName: ${values.length} items found');
-      for (var item in values) {
-        debugPrint('📝 Item in box: ${getId(item)}');
-      }
       return values;
     } catch (e) {
-      debugPrint('❌ Error getting all items from box $boxName: $e');
       rethrow;
     }
   }
@@ -82,11 +63,8 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   Future<void> update(T item) async {
     try {
       final id = getId(item);
-      debugPrint('🔄 Updating item in box $boxName with id: $id');
       await box.put(id, item);
-      debugPrint('✅ Item updated successfully');
     } catch (e) {
-      debugPrint('❌ Error updating item in box $boxName: $e');
       rethrow;
     }
   }
@@ -95,11 +73,25 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
   Future<void> delete(dynamic item) async {
     try {
       final id = item is String ? item : getId(item);
-      debugPrint('🗑️ Deleting item from box $boxName with id: $id');
-      await box.delete(id);
-      debugPrint('✅ Item deleted successfully');
+
+      // Verify item exists before deletion
+      final exists = box.containsKey(id);
+
+      if (exists) {
+        await box.delete(id);
+
+        // Verify deletion
+        final stillExists = box.containsKey(id);
+
+
+        if (stillExists) {
+          await box.delete(id);
+        }
+      } else {
+        print('⚠️ HiveLocalDataSource: Item not found for deletion');
+      }
     } catch (e) {
-      debugPrint('❌ Error deleting item from box $boxName: $e');
+      print('❌ HiveLocalDataSource: Error during deletion: $e');
       rethrow;
     }
   }
@@ -109,7 +101,6 @@ abstract class HiveLocalDataSource<T> implements BaseLocalDataSource<T> {
     try {
       await box.clear();
     } catch (e) {
-      debugPrint('Error clearing box $boxName: $e');
       rethrow;
     }
   }

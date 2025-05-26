@@ -114,7 +114,6 @@ class AppIcons {
   // Get icon by name (case-insensitive)
   static IconData? getIconByName(String name) {
     final iconName = name.toLowerCase().replaceAll(' ', '_');
-    print('🔍 AppIcons.getIconByName: Looking for icon: $iconName');
 
     // Map of icon names to IconData
     final iconMap = {
@@ -178,10 +177,8 @@ class AppIcons {
 
     final icon = iconMap[iconName];
     if (icon == null) {
-      print('⚠️ AppIcons.getIconByName: No icon found for name: $iconName');
       return Icons.category;
     }
-    print('✅ AppIcons.getIconByName: Found icon: $icon');
     return icon;
   }
 }

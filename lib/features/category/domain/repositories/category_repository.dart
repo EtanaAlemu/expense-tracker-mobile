@@ -1,20 +1,13 @@
 import 'package:dartz/dartz.dart';
-import 'package:expense_tracker/core/domain/usecases/base_usecase.dart';
 import 'package:expense_tracker/core/error/failures.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 
 abstract class CategoryRepository {
   // Get all categories (local + remote)
-  Future<Either<Failure, List<Category>>> getCategories(NoParams params);
-
-  // Get only local categories
-  Future<Either<Failure, List<Category>>> getLocalCategories();
-
-  // Get only remote categories
-  Future<Either<Failure, List<Category>>> getRemoteCategories();
+  Future<Either<Failure, List<Category>>> getCategories(String userId);
 
   // Get a single category
-  Future<Either<Failure, Category>> getCategory(String id);
+  Future<Either<Failure, Category>> getCategory(String id, String userId);
 
   // Add a new category
   Future<Either<Failure, Category>> addCategory(Category category);
@@ -23,18 +16,10 @@ abstract class CategoryRepository {
   Future<Either<Failure, Category>> updateCategory(Category category);
 
   // Delete a category
-  Future<Either<Failure, void>> deleteCategory(Category category);
+  Future<Either<Failure, void>> deleteCategory(Category category, String userId);
 
   // Get categories by type
-  Future<Either<Failure, List<Category>>> getCategoriesByType(String type);
+  Future<Either<Failure, List<Category>>> getCategoriesByType(String type, String userId);
 
-  // Local data methods
-  Future<Either<Failure, void>> cacheCategory(Category category);
-  Future<Either<Failure, void>> cacheCategories(List<Category> categories);
-
-  // Remote data methods
-  Future<Either<Failure, Category?>> getRemoteCategory(String id);
-  Future<Either<Failure, void>> addRemoteCategory(Category category);
-  Future<Either<Failure, void>> updateRemoteCategory(Category category);
-  Future<Either<Failure, void>> deleteRemoteCategory(String id);
+  Future<Either<Failure, void>> syncCategories();
 }

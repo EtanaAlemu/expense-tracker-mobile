@@ -21,3 +21,5 @@ class DeleteTransaction extends TransactionEvent {
 
   DeleteTransaction(this.transaction);
 }
+
+class SyncTransactions extends TransactionEvent {}
