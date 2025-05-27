@@ -22,6 +22,7 @@ import 'package:expense_tracker/features/category/domain/usecases/sync_categorie
 import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_category.dart'
     as get_transactions_by_category;
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final get_categories.GetCategories getCategories;
@@ -33,7 +34,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   final sync_categories.SyncCategories syncCategories;
   final get_transactions_by_category.GetTransactionsByCategory
       getTransactionsByCategory;
-  final String userId;
+  final AuthRepository _authRepository;
   final NotificationService _notificationService;
 
   CategoryBloc({
@@ -45,9 +46,10 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     required this.updateCategory,
     required this.deleteCategory,
     required this.syncCategories,
-    required this.userId,
+    required AuthRepository authRepository,
     required NotificationService notificationService,
-  })  : _notificationService = notificationService,
+  })  : _authRepository = authRepository,
+        _notificationService = notificationService,
         super(CategoryInitial()) {
     on<GetCategories>(_onGetCategories);
     on<GetCategory>(_onGetCategory);
@@ -59,18 +61,60 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     on<ClearCategories>(_onClearCategories);
   }
 
+  Future<String> _getUserId() async {
+    int retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = Duration(milliseconds: 500);
+
+    while (retryCount < maxRetries) {
+      final userResult = await _authRepository.getCurrentUser();
+      final userId = userResult.fold(
+        (failure) {
+          print(
+              '❌ Failed to get user ID (attempt ${retryCount + 1}/$maxRetries): ${failure.message}');
+          return '';
+        },
+        (user) {
+          print('✅ Successfully retrieved user ID: ${user.id}');
+          return user.id;
+        },
+      );
+
+      if (userId.isNotEmpty) {
+        return userId;
+      }
+
+      if (retryCount < maxRetries - 1) {
+        print('🔄 Retrying in ${retryDelay.inMilliseconds}ms...');
+        await Future.delayed(retryDelay);
+        retryCount++;
+      } else {
+        print('❌ Max retries reached, returning empty user ID');
+        break;
+      }
+    }
+    return '';
+  }
+
   Future<void> _onGetCategories(
     GetCategories event,
     Emitter<CategoryState> emit,
   ) async {
     try {
       emit(const CategoryLoading());
+      final userId = await _getUserId();
+      if (userId.isEmpty) {
+        print('❌ No user ID available for getting categories');
+        emit(const CategoryLoaded([]));
+        return;
+      }
       final result = await getCategories(UserParams(userId: userId));
       await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (categories) async => emit(CategoryLoaded(categories)),
       );
     } catch (e) {
+      print('❌ Error getting categories: $e');
       emit(CategoryError(e.toString()));
     }
   }
@@ -81,6 +125,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   ) async {
     try {
       emit(CategoryLoading());
+      final userId = await _getUserId();
       final result =
           await getCategory(get_category.Params(id: event.id, userId: userId));
       await result.fold(
@@ -104,12 +149,12 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   ) async {
     try {
       emit(const CategoryLoading());
+      final userId = await _getUserId();
       final result = await addCategory(
           add_category.Params(category: event.category, userId: userId));
       await result.fold(
         (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
         (category) async {
-          await _checkBudgetAlerts(category);
           final categoriesResult =
               await getCategories(UserParams(userId: userId));
           await categoriesResult.fold(
@@ -135,6 +180,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       }
 
       emit(const CategoryLoading());
+      final userId = await _getUserId();
       final result = await updateCategory(
           update_category.Params(category: event.category));
       await result.fold(
@@ -166,6 +212,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
           currentState is CategoryLoaded ? currentState.categories : null;
       print('📋 Current categories count: ${currentCategories?.length ?? 0}');
 
+      final userId = await _getUserId();
       // Check if category has transactions
       print('🔍 Checking for transactions in category: ${event.category.id}');
       final transactionsResult = await getTransactionsByCategory(
@@ -200,32 +247,23 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
               emit(CategoryError(_mapFailureToMessage(failure),
                   previousCategories: currentCategories));
             },
-            (_) async {
-              print('✅ Category deleted successfully, refreshing list');
+            (success) async {
+              print('✅ Category deleted successfully');
               // Get updated categories list
               final categoriesResult =
                   await getCategories(UserParams(userId: userId));
               await categoriesResult.fold(
-                (failure) async {
-                  print('❌ Error refreshing categories: ${failure.message}');
-                  emit(CategoryError(_mapFailureToMessage(failure),
-                      previousCategories: currentCategories));
-                },
-                (categories) async {
-                  print('✅ Categories refreshed successfully');
-                  emit(CategoryLoaded(categories));
-                },
+                (failure) async => emit(CategoryError(
+                    _mapFailureToMessage(failure),
+                    previousCategories: currentCategories)),
+                (categories) async => emit(CategoryLoaded(categories)),
               );
             },
           );
         },
       );
     } catch (e) {
-      print('❌ Unexpected error during category deletion: $e');
-      final currentState = state;
-      final currentCategories =
-          currentState is CategoryLoaded ? currentState.categories : null;
-      emit(CategoryError(e.toString(), previousCategories: currentCategories));
+      emit(CategoryError(e.toString()));
     }
   }
 
@@ -234,7 +272,8 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      emit(CategoryLoading());
+      emit(const CategoryLoading());
+      final userId = await _getUserId();
       final result = await getCategoriesByType(
           get_categories_by_type.Params(type: event.type, userId: userId));
       await result.fold(
@@ -251,77 +290,44 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     Emitter<CategoryState> emit,
   ) async {
     try {
-      // Keep current categories in case of error
-      final currentState = state;
-      final currentCategories =
-          currentState is CategoryLoaded ? currentState.categories : null;
-
       emit(const CategoryLoading());
       final result = await syncCategories(NoParams());
       await result.fold(
-        (failure) async {
-          print('❌ Sync failed: ${failure.message}');
-          emit(CategoryError(_mapFailureToMessage(failure),
-              previousCategories: currentCategories));
-        },
-        (_) async {
-          print('✅ Sync completed, refreshing categories');
+        (failure) async => emit(CategoryError(_mapFailureToMessage(failure))),
+        (success) async {
+          final userId = await _getUserId();
           // Get updated categories list
           final categoriesResult =
               await getCategories(UserParams(userId: userId));
           await categoriesResult.fold(
-            (failure) async {
-              print('❌ Failed to get updated categories: ${failure.message}');
-              emit(CategoryError(_mapFailureToMessage(failure),
-                  previousCategories: currentCategories));
-            },
-            (categories) async {
-              print('✅ Got ${categories.length} updated categories');
-              // Filter out any deleted categories
-              final activeCategories =
-                  categories.where((cat) => !cat.isDeleted).toList();
-              print('✅ Found ${activeCategories.length} active categories');
-
-              // Update the state with the new categories
-              if (activeCategories.isEmpty) {
-                print('ℹ️ No active categories found after sync');
-                emit(const CategoryLoaded([]));
-              } else {
-                print(
-                    '📋 Emitting updated category list with ${activeCategories.length} categories');
-                activeCategories
-                    .forEach((cat) => print('   - ${cat.name} (${cat.id})'));
-                emit(CategoryLoaded(activeCategories));
-              }
-            },
+            (failure) async =>
+                emit(CategoryError(_mapFailureToMessage(failure))),
+            (categories) async => emit(CategoryLoaded(categories)),
           );
         },
       );
     } catch (e) {
-      print('❌ Error during sync: $e');
-      final currentState = state;
-      final currentCategories =
-          currentState is CategoryLoaded ? currentState.categories : null;
-      emit(CategoryError(e.toString(), previousCategories: currentCategories));
+      emit(CategoryError(e.toString()));
     }
   }
 
-  void _onClearCategories(ClearCategories event, Emitter<CategoryState> emit) {
+  Future<void> _onClearCategories(
+    ClearCategories event,
+    Emitter<CategoryState> emit,
+  ) async {
     emit(CategoryInitial());
-  }
-
-  Future<void> _checkBudgetAlerts(Category category) async {
-    await _notificationService.scheduleBudgetNotification(category);
   }
 
   String _mapFailureToMessage(Failure failure) {
     switch (failure.runtimeType) {
       case ServerFailure:
-        return "Server failure";
+        return 'Server error occurred';
       case CacheFailure:
-        return "Cache failure";
+        return 'Cache error occurred';
+      case NetworkFailure:
+        return 'Network error occurred';
       default:
-        return "Unexpected error";
+        return 'Unexpected error occurred';
     }
   }
 }

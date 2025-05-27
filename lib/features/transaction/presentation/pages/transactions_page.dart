@@ -29,6 +29,7 @@ import 'package:expense_tracker/features/transaction/domain/usecases/sync_transa
 import 'package:intl/intl.dart';
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart'
     as get_category;
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -50,14 +51,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   void initState() {
     super.initState();
-    final userId = context.read<AuthBloc>().state.user!.id;
     _transactionBloc = TransactionBloc(
       getTransactions: getIt<get_transactions.GetTransactions>(),
       addTransaction: getIt<add_transaction.AddTransaction>(),
       updateTransaction: getIt<update_transaction.UpdateTransaction>(),
       deleteTransaction: getIt<delete_transaction.DeleteTransaction>(),
       syncTransactions: getIt<sync_transactions.SyncTransactions>(),
-      userId: userId,
+      authRepository: getIt<AuthRepository>(),
       getCategory: getIt<get_category.GetCategory>(),
       notificationService: getIt<NotificationService>(),
     )..add(GetTransactions());

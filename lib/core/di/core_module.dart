@@ -14,6 +14,7 @@ import 'package:expense_tracker/core/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
 import 'package:expense_tracker/features/transaction/domain/repositories/transaction_repository.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 @module
 abstract class CoreModule {
@@ -79,10 +80,10 @@ abstract class CoreModule {
   @singleton
   NotificationService notificationService(
     TransactionRepository transactionRepository,
-    String userId,
+    AuthRepository authRepository,
   ) =>
       NotificationService(
         transactionRepository: transactionRepository,
-        userId: userId,
+        authRepository: authRepository,
       );
 }

@@ -31,15 +31,51 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> getCurrentUser() async {
-    try {
-      final user = await _localDataSource.getCachedUser();
-      if (user == null) {
-        return Left(CacheFailure('No user found'));
+    int retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = Duration(milliseconds: 500);
+
+    while (retryCount < maxRetries) {
+      try {
+        final user = await _localDataSource.getCachedUser();
+        if (user == null) {
+          print(
+              '❌ No user found in cache (attempt ${retryCount + 1}/$maxRetries)');
+          if (retryCount < maxRetries - 1) {
+            print('🔄 Retrying in ${retryDelay.inMilliseconds}ms...');
+            await Future.delayed(retryDelay);
+            retryCount++;
+            continue;
+          }
+          return Left(CacheFailure('No user found'));
+        }
+        final entity = UserMapper.toEntity(user);
+        if (entity.id.isEmpty) {
+          print('❌ User ID is empty (attempt ${retryCount + 1}/$maxRetries)');
+          if (retryCount < maxRetries - 1) {
+            print('🔄 Retrying in ${retryDelay.inMilliseconds}ms...');
+            await Future.delayed(retryDelay);
+            retryCount++;
+            continue;
+          }
+          return Left(CacheFailure('User ID is empty'));
+        }
+        print('✅ Successfully retrieved user with ID: ${entity.id}');
+        return Right(entity);
+      } catch (e) {
+        print(
+            '❌ Error getting current user (attempt ${retryCount + 1}/$maxRetries): $e');
+        if (retryCount < maxRetries - 1) {
+          print('🔄 Retrying in ${retryDelay.inMilliseconds}ms...');
+          await Future.delayed(retryDelay);
+          retryCount++;
+          continue;
+        }
+        return Left(CacheFailure('Failed to get current user: $e'));
       }
-      return Right(UserMapper.toEntity(user));
-    } catch (e) {
-      return Left(CacheFailure('Failed to get current user: $e'));
     }
+    return Left(
+        CacheFailure('Failed to get current user after $maxRetries attempts'));
   }
 
   @override

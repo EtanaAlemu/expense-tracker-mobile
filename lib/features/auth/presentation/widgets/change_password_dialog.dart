@@ -64,6 +64,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             previous.error != current.error ||
             previous.successMessage != current.successMessage,
         listener: (context, state) {
+          // Hide any existing snackbars
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -98,6 +101,11 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 ),
               ),
             );
+            // Clear form fields
+            _currentPasswordController.clear();
+            _newPasswordController.clear();
+            _confirmPasswordController.clear();
+            // Close dialog after a short delay
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
                 Navigator.of(context).pop();

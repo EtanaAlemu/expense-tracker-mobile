@@ -20,6 +20,8 @@ import 'package:expense_tracker/core/presentation/bloc/theme_bloc.dart'
     as _i986;
 import 'package:expense_tracker/core/services/connectivity/connectivity_service.dart'
     as _i703;
+import 'package:expense_tracker/core/services/connectivity/di/connectivity_module.dart'
+    as _i431;
 import 'package:expense_tracker/core/services/notification/notification_service.dart'
     as _i398;
 import 'package:expense_tracker/core/services/theme/theme_service.dart'
@@ -198,6 +200,7 @@ extension GetItInjectableX on _i174.GetIt {
     final budgetModule = _$BudgetModule();
     final transactionModule = _$TransactionModule();
     final authModule = _$AuthModule();
+    final connectivityModule = _$ConnectivityModule();
     gh.factory<_i811.BiometricService>(() => _i811.BiometricService());
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => coreModule.sharedPreferences,
@@ -385,6 +388,56 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i452.CheckRememberMeUseCase>(),
               gh<_i813.ValidateTokenOnStartUseCase>(),
             ));
+    gh.singleton<_i398.NotificationService>(
+        () => coreModule.notificationService(
+              gh<_i89.TransactionRepository>(),
+              gh<_i664.AuthRepository>(),
+            ));
+    gh.singleton<_i703.ConnectivityService>(() => _i703.ConnectivityService(
+          connectionChecker: gh<_i973.InternetConnectionChecker>(),
+          syncTransactions: gh<_i141.SyncTransactions>(),
+          syncCategories: gh<_i567.SyncCategories>(),
+          getBudgets: gh<_i464.GetBudgets>(),
+          getCategories: gh<_i475.GetCategories>(),
+          l10n: gh<_i21.AppLocalizations>(),
+          authRepository: gh<_i664.AuthRepository>(),
+          transactionRepository: gh<_i89.TransactionRepository>(),
+        ));
+    gh.singleton<_i180.CategoryBloc>(() => categoryModule.categoryBloc(
+          gh<_i475.GetCategories>(),
+          gh<_i948.GetCategory>(),
+          gh<_i481.GetTransactionsByCategory>(),
+          gh<_i667.GetCategoriesByType>(),
+          gh<_i656.AddCategory>(),
+          gh<_i439.UpdateCategory>(),
+          gh<_i1060.DeleteCategory>(),
+          gh<_i567.SyncCategories>(),
+          gh<_i664.AuthRepository>(),
+          gh<_i398.NotificationService>(),
+        ));
+    gh.singleton<_i703.ConnectivityService>(
+      () => connectivityModule.connectivityService(
+        gh<_i973.InternetConnectionChecker>(),
+        gh<_i141.SyncTransactions>(),
+        gh<_i567.SyncCategories>(),
+        gh<_i464.GetBudgets>(),
+        gh<_i475.GetCategories>(),
+        gh<_i21.AppLocalizations>(),
+        gh<_i664.AuthRepository>(),
+        gh<_i89.TransactionRepository>(),
+      ),
+      instanceName: 'connectivityService',
+    );
+    gh.factory<_i814.TransactionBloc>(() => transactionModule.transactionBloc(
+          gh<_i756.GetTransactions>(),
+          gh<_i882.AddTransaction>(),
+          gh<_i251.UpdateTransaction>(),
+          gh<_i675.DeleteTransaction>(),
+          gh<_i141.SyncTransactions>(),
+          gh<_i664.AuthRepository>(),
+          gh<_i948.GetCategory>(),
+          gh<_i398.NotificationService>(),
+        ));
     gh.factory<_i985.AuthBloc>(() => authModule.authBloc(
           gh<_i673.SignInUseCase>(),
           gh<_i569.SignUpUseCase>(),
@@ -403,45 +456,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i811.BiometricService>(),
           gh<_i142.VerifyOtpUseCase>(),
           gh<_i139.ResendVerificationCodeUseCase>(),
+          gh<_i703.ConnectivityService>(instanceName: 'connectivityService'),
         ));
-    gh.singleton<_i703.ConnectivityService>(() => _i703.ConnectivityService(
-          connectionChecker: gh<_i973.InternetConnectionChecker>(),
-          syncTransactions: gh<_i141.SyncTransactions>(),
-          syncCategories: gh<_i567.SyncCategories>(),
-          getBudgets: gh<_i464.GetBudgets>(),
-          l10n: gh<_i21.AppLocalizations>(),
-          authBloc: gh<_i985.AuthBloc>(),
-        ));
-    gh.singleton<String>(() => authModule.provideUserId(gh<_i985.AuthBloc>()));
     gh.factory<_i43.AuthInterceptor>(
         () => _i43.AuthInterceptor(gh<_i985.AuthBloc>()));
-    gh.singleton<_i398.NotificationService>(
-        () => coreModule.notificationService(
-              gh<_i89.TransactionRepository>(),
-              gh<String>(),
-            ));
-    gh.factory<_i814.TransactionBloc>(() => transactionModule.transactionBloc(
-          gh<_i756.GetTransactions>(),
-          gh<_i882.AddTransaction>(),
-          gh<_i251.UpdateTransaction>(),
-          gh<_i675.DeleteTransaction>(),
-          gh<_i141.SyncTransactions>(),
-          gh<String>(),
-          gh<_i948.GetCategory>(),
-          gh<_i398.NotificationService>(),
-        ));
-    gh.singleton<_i180.CategoryBloc>(() => categoryModule.categoryBloc(
-          gh<_i475.GetCategories>(),
-          gh<_i948.GetCategory>(),
-          gh<_i481.GetTransactionsByCategory>(),
-          gh<_i667.GetCategoriesByType>(),
-          gh<_i656.AddCategory>(),
-          gh<_i439.UpdateCategory>(),
-          gh<_i1060.DeleteCategory>(),
-          gh<_i567.SyncCategories>(),
-          gh<String>(),
-          gh<_i398.NotificationService>(),
-        ));
     return this;
   }
 }
@@ -457,3 +475,5 @@ class _$BudgetModule extends _i755.BudgetModule {}
 class _$TransactionModule extends _i356.TransactionModule {}
 
 class _$AuthModule extends _i903.AuthModule {}
+
+class _$ConnectivityModule extends _i431.ConnectivityModule {}

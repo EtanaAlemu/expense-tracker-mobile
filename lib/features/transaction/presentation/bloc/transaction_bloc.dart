@@ -16,6 +16,7 @@ import 'package:expense_tracker/features/transaction/presentation/bloc/transacti
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart'
     as get_category;
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final get_transactions.GetTransactions getTransactions;
@@ -23,7 +24,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final update_transaction.UpdateTransaction updateTransaction;
   final delete_transaction.DeleteTransaction deleteTransaction;
   final sync_transactions.SyncTransactions syncTransactions;
-  final String userId;
+  final AuthRepository _authRepository;
   final NotificationService _notificationService;
   final get_category.GetCategory getCategory;
 
@@ -33,10 +34,11 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     required this.updateTransaction,
     required this.deleteTransaction,
     required this.syncTransactions,
-    required this.userId,
+    required AuthRepository authRepository,
     required this.getCategory,
     required NotificationService notificationService,
-  })  : _notificationService = notificationService,
+  })  : _authRepository = authRepository,
+        _notificationService = notificationService,
         super(TransactionInitial()) {
     on<GetTransactions>(_onGetTransactions);
     on<AddTransaction>(_onAddTransaction);
@@ -45,12 +47,21 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     on<SyncTransactions>(_onSyncTransactions);
   }
 
+  Future<String> _getUserId() async {
+    final userResult = await _authRepository.getCurrentUser();
+    return userResult.fold(
+      (failure) => throw Exception(failure.toString()),
+      (user) => user.id,
+    );
+  }
+
   Future<void> _onGetTransactions(
     GetTransactions event,
     Emitter<TransactionState> emit,
   ) async {
     emit(TransactionLoading());
     try {
+      final userId = await _getUserId();
       final result = await getTransactions(UserParams(userId: userId));
       await result.fold(
         (failure) async => emit(TransactionError(failure.toString())),
@@ -75,6 +86,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     Emitter<TransactionState> emit,
   ) async {
     try {
+      final userId = await _getUserId();
       final result = await addTransaction(event.transaction);
       await result.fold(
         (failure) async => emit(TransactionError(failure.toString())),
@@ -123,6 +135,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   ) async {
     emit(TransactionLoading());
     try {
+      final userId = await _getUserId();
       final result = await updateTransaction(event.transaction);
       await result.fold(
         (failure) async => emit(TransactionError(failure.toString())),
@@ -146,6 +159,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   ) async {
     emit(TransactionLoading());
     try {
+      final userId = await _getUserId();
       final result = await deleteTransaction(event.transaction);
       await result.fold(
         (failure) async => emit(TransactionError(failure.toString())),
@@ -168,28 +182,33 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     Emitter<TransactionState> emit,
   ) async {
     emit(TransactionLoading());
-    final result = await syncTransactions(NoParams());
-    result.fold(
-      (failure) => emit(TransactionError(failure.toString())),
-      (_) async {
-        // After sync, get the updated transactions
-        final transactionsResult =
-            await getTransactions(UserParams(userId: userId));
-        transactionsResult.fold(
-          (failure) => emit(TransactionError(failure.toString())),
-          (transactions) async {
-            // Schedule notifications for upcoming transactions
-            for (final transaction in transactions) {
-              if (transaction.date.isAfter(DateTime.now())) {
-                await _notificationService
-                    .scheduleTransactionNotification(transaction);
+    try {
+      final userId = await _getUserId();
+      final result = await syncTransactions(NoParams());
+      result.fold(
+        (failure) => emit(TransactionError(failure.toString())),
+        (_) async {
+          // After sync, get the updated transactions
+          final transactionsResult =
+              await getTransactions(UserParams(userId: userId));
+          transactionsResult.fold(
+            (failure) => emit(TransactionError(failure.toString())),
+            (transactions) async {
+              // Schedule notifications for upcoming transactions
+              for (final transaction in transactions) {
+                if (transaction.date.isAfter(DateTime.now())) {
+                  await _notificationService
+                      .scheduleTransactionNotification(transaction);
+                }
               }
-            }
-            emit(TransactionLoaded(transactions));
-          },
-        );
-      },
-    );
+              emit(TransactionLoaded(transactions));
+            },
+          );
+        },
+      );
+    } catch (e) {
+      emit(TransactionError(e.toString()));
+    }
   }
 
   Future<void> _checkBudgetAlerts(Category category) async {

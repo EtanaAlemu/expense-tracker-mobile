@@ -18,6 +18,7 @@ import 'package:expense_tracker/features/transaction/domain/usecases/get_total_t
 import 'package:expense_tracker/features/transaction/domain/usecases/sync_transactions.dart';
 import 'package:expense_tracker/features/transaction/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 @module
 abstract class TransactionModule {
@@ -103,7 +104,7 @@ abstract class TransactionModule {
     UpdateTransaction updateTransaction,
     DeleteTransaction deleteTransaction,
     SyncTransactions syncTransactions,
-    String userId,
+    AuthRepository authRepository,
     GetCategory getCategory,
     NotificationService notificationService,
   ) =>
@@ -113,7 +114,7 @@ abstract class TransactionModule {
         updateTransaction: updateTransaction,
         deleteTransaction: deleteTransaction,
         syncTransactions: syncTransactions,
-        userId: userId,
+        authRepository: authRepository,
         getCategory: getCategory,
         notificationService: notificationService,
       );

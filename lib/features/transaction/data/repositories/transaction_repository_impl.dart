@@ -27,6 +27,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<Either<Failure, List<Transaction>>> getTransactions(
       String userId) async {
     try {
+      print('🔍 Getting transactions for user: $userId');
       // First get and return local data immediately
       final localResult = await getLocalTransactions();
       List<Transaction> transactions = [];

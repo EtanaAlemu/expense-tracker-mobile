@@ -31,6 +31,7 @@ import 'package:expense_tracker/features/transaction/domain/usecases/sync_transa
 import 'package:expense_tracker/features/category/domain/usecases/get_category.dart'
     as get_category;
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 enum TimePeriod { day, week, month, year }
 
@@ -204,7 +205,7 @@ class _HomePageState extends State<HomePage> {
               updateTransaction: getIt<update_transaction.UpdateTransaction>(),
               deleteTransaction: getIt<delete_transaction.DeleteTransaction>(),
               syncTransactions: getIt<sync_transactions.SyncTransactions>(),
-              userId: authState.user!.id,
+              authRepository: getIt<AuthRepository>(),
               getCategory: getIt<get_category.GetCategory>(),
               notificationService: getIt<NotificationService>(),
             )..add(GetTransactions()),

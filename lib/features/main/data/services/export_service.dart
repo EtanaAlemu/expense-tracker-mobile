@@ -73,7 +73,8 @@ class ExportService {
       );
 
       // Get categories using the use case
-      final categoriesResult = await _getCategories(base.UserParams(userId: user.id));
+      final categoriesResult =
+          await _getCategories(base.UserParams(userId: user.id));
       final categories = categoriesResult.fold(
         (failure) => throw Exception('Failed to get categories: $failure'),
         (categories) => categories,
@@ -159,7 +160,8 @@ class ExportService {
       );
 
       // Get categories using the use case
-      final categoriesResult = await _getCategories(base.UserParams(userId: user.id));
+      final categoriesResult =
+          await _getCategories(base.UserParams(userId: user.id));
       final categories = categoriesResult.fold(
         (failure) => throw Exception('Failed to get categories: $failure'),
         (categories) => categories,
@@ -317,7 +319,8 @@ class ExportService {
       );
 
       // Get categories using the use case
-      final categoriesResult = await _getCategories(base.UserParams(userId: user.id));
+      final categoriesResult =
+          await _getCategories(base.UserParams(userId: user.id));
       final categories = categoriesResult.fold(
         (failure) => throw Exception('Failed to get categories: $failure'),
         (categories) => categories,
@@ -549,6 +552,9 @@ class ExportService {
 
   // Helper method to create IconData from codePoint
   IconData _getIconFromCodePoint(int codePoint) {
+    if (codePoint == Icons.category.codePoint) {
+      return Icons.category;
+    }
     return IconData(codePoint, fontFamily: 'MaterialIcons');
   }
 

@@ -31,6 +31,7 @@ import 'package:expense_tracker/features/auth/domain/usecases/validate_token_on_
 import 'package:expense_tracker/features/auth/domain/usecases/clear_remember_me_usecase.dart';
 import 'package:expense_tracker/core/localization/app_localizations.dart';
 import 'package:expense_tracker/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_tracker/core/services/connectivity/connectivity_service.dart';
 
 @module
 abstract class AuthModule {
@@ -168,6 +169,7 @@ abstract class AuthModule {
     BiometricService biometricService,
     VerifyOtpUseCase verifyOtpUseCase,
     ResendVerificationCodeUseCase resendVerificationCodeUseCase,
+    @Named('connectivityService') ConnectivityService connectivityService,
   ) =>
       AuthBloc(
         signInUseCase: signInUseCase,
@@ -187,14 +189,6 @@ abstract class AuthModule {
         biometricService: biometricService,
         verifyOtpUseCase: verifyOtpUseCase,
         resendVerificationCodeUseCase: resendVerificationCodeUseCase,
+        connectivityService: connectivityService,
       );
-
-  @singleton
-  String provideUserId(AuthBloc authBloc) {
-    final state = authBloc.state;
-    if (state is AuthAuthenticated && state.user != null) {
-      return state.user!.id;
-    }
-    return '';
-  }
 }

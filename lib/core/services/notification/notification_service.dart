@@ -4,6 +4,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:expense_tracker/features/transaction/domain/entities/transaction.dart';
 import 'package:expense_tracker/features/category/domain/entities/category.dart';
 import 'package:expense_tracker/features/transaction/domain/repositories/transaction_repository.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) {
@@ -15,18 +16,29 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
   final TransactionRepository _transactionRepository;
-  final String _userId;
+  final AuthRepository _authRepository;
 
   NotificationService({
     required TransactionRepository transactionRepository,
-    required String userId,
+    required AuthRepository authRepository,
   })  : _transactionRepository = transactionRepository,
-        _userId = userId {
+        _authRepository = authRepository {
     _initializeNotifications();
   }
 
   // Add a set to track recently shown notifications
   final Set<String> _recentlyShownNotifications = {};
+
+  Future<String> _getUserId() async {
+    final userResult = await _authRepository.getCurrentUser();
+    return userResult.fold(
+      (failure) {
+        print('❌ Failed to get current user: ${failure.message}');
+        return '';
+      },
+      (user) => user.id,
+    );
+  }
 
   void _initializeNotifications() {
     // Initialize timezone
@@ -431,7 +443,7 @@ class NotificationService {
           await _transactionRepository.getTransactionsByDateRange(
         startOfMonth,
         endOfMonth,
-        _userId,
+        await _getUserId(),
       );
 
       final totalSpent = transactionsResult.fold(

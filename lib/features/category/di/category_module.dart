@@ -18,6 +18,7 @@ import 'package:expense_tracker/features/category/domain/usecases/sync_categorie
 import 'package:expense_tracker/features/category/presentation/bloc/category_bloc.dart';
 import 'package:expense_tracker/features/transaction/domain/usecases/get_transactions_by_category.dart';
 import 'package:expense_tracker/core/services/notification/notification_service.dart';
+import 'package:expense_tracker/features/auth/domain/repositories/auth_repository.dart';
 
 @module
 abstract class CategoryModule {
@@ -92,7 +93,7 @@ abstract class CategoryModule {
     UpdateCategory updateCategory,
     DeleteCategory deleteCategory,
     SyncCategories syncCategories,
-    String userId,
+    AuthRepository authRepository,
     NotificationService notificationService,
   ) {
     return CategoryBloc(
@@ -104,7 +105,7 @@ abstract class CategoryModule {
       updateCategory: updateCategory,
       deleteCategory: deleteCategory,
       syncCategories: syncCategories,
-      userId: userId,
+      authRepository: authRepository,
       notificationService: notificationService,
     );
   }
