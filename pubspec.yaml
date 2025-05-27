@@ -78,7 +78,7 @@ dependencies:
 
   # UI Components
   fl_chart: ^0.66.2
-  intl: ^0.19.0
+  intl: ^0.20.2
   app_links: ^6.4.0
   flutter_localizations:
     sdk: flutter
