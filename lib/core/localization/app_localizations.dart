@@ -150,6 +150,8 @@ class AppLocalizations {
       'email_verification_success_submessage':
           'You can now log in to your account.',
       'go_to_sign_in': 'Go to Sign In',
+      'enter_new_password': 'Enter your new password',
+      'back_to_sign_in': 'Back to Sign In',
 
       // Profile
       'profile': 'Profile',
@@ -487,6 +489,8 @@ class AppLocalizations {
       "email_verification_success_submessage":
           "መለያዎን ለማንቃት እባክዎን ኢሜይልዎን ያረጋግጡ።",
       'go_to_sign_in': 'ግባ ይጀምሩ',
+      'enter_new_password': 'አዲስ የይለፍ ቃል ያስገቡ',
+      'back_to_sign_in': 'ግባ ይጀምሩ',
 
       // Profile
       'profile': 'መገለጫ',

@@ -126,11 +126,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (response.statusCode == 200) {
         return ResetPasswordResponseModel.fromJson(response.data);
       } else {
-        throw AuthException(
-            'Failed to reset password: ${response.statusMessage}');
+        final errorMessage =
+            response.data['message'] ?? 'Failed to reset password';
+        throw AuthException(errorMessage);
       }
     } on DioException catch (e) {
-      throw AuthException('Failed to reset password: ${e.message}');
+      final errorMessage =
+          e.response?.data['message'] ?? 'Failed to reset password';
+      throw AuthException(errorMessage);
     } catch (e) {
       throw AuthException('Failed to reset password: $e');
     }

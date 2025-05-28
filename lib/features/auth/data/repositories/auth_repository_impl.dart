@@ -245,10 +245,12 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       await _remoteDataSource.resetPassword(token, newPassword);
       return const Right(null);
+    } on AuthException catch (e) {
+      return Left(ServerFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(UnknownFailure(e.toString()));
+      return Left(ServerFailure('Failed to reset password: $e'));
     }
   }
 

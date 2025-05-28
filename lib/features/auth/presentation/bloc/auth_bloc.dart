@@ -312,8 +312,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
     result.fold(
-      (failure) => emit(AuthError(message: _getErrorMessage(failure))),
-      (_) => emit(const AuthInitial()),
+      (failure) {
+        if (failure is ServerFailure) {
+          emit(AuthError(message: failure.message));
+        } else {
+          emit(AuthError(message: _getErrorMessage(failure)));
+        }
+      },
+      (_) => emit(AuthSuccess(message: _l10n.get('password_reset_success'))),
     );
   }
 
